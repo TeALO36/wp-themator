@@ -1,0 +1,46 @@
+/* Frontend Layout Styles for DiviClone
+   These styles ensure the layout built visually matches the frontend.
+*/
+
+.diviclone-frontend-wrapper {
+  font-family: inherit;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.dc-front-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.dc-front-row {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem; /* Matches the builder gap */
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.dc-front-module {
+  flex: 1;
+  min-width: 250px; /* Responsive break */
+  box-sizing: border-box;
+}
+
+/* Base typographic resets for modules if needed over the theme */
+.dc-front-module img {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 768px) {
+  .dc-front-row {
+      flex-direction: column;
+      gap: 1rem;
+  }
+}
