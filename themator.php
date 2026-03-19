@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Themator
- * Plugin URI:  https://github.com/votre-pseudo/wp-themator
+ * Plugin URI:  https://github.com/teano/wp-themator
  * Description: Un constructeur de pages visuel premium avec mode plein écran et design fluide.
  * Version:     1.0.0
  * Author:      Teano
@@ -236,4 +236,4 @@ class ThematorUpdater {
         return $this->githubAPIResult;
     }
 }
-new ThematorUpdater( 'votre-pseudo/wp-themator' );
+new ThematorUpdater( 'teano/wp-themator' );

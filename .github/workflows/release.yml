@@ -1,9 +1,9 @@
-name: Release Themator
+name: Create Release
 
 on:
   push:
     tags:
-      - 'v*' # Trigger on version tags like v1.0.0
+      - 'v*'
 
 jobs:
   build:
@@ -13,19 +13,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create Plugin ZIP
+      - name: Create Zip
         run: |
-          mkdir build
-          # Exclude git and github files
-          zip -r build/themator.zip . -x "*.git*" ".github*" "tests/*" "node_modules/*"
+          zip -r themator.zip . -x "*.git*" "node_modules/*" ".github/*" "C:/*" "D:/*" "brain/*"
 
-      - name: Create GitHub Release
+      - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/themator.zip
-          name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
+          files: themator.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
