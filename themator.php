@@ -3,7 +3,7 @@
  * Plugin Name: Themator
  * Plugin URI:  https://github.com/TeALO36/wp-themator
  * Description: Un constructeur de pages visuel premium avec mode plein écran et design fluide.
- * Version:     1.1.2
+ * Version:     1.2.0
  * Author:      Teano
  * Text Domain: themator
  */
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; 
 }
 
-define( 'THEMATOR_VERSION', '1.1.2' );
+define( 'THEMATOR_VERSION', '1.2.0' );
 define( 'THEMATOR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'THEMATOR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -301,6 +301,10 @@ function themator_register_admin_menu() {
 
     add_submenu_page( 'themator', __( 'Tableau de bord', 'themator' ), __( 'Tableau de bord', 'themator' ), 'edit_posts',    'themator',                'themator_page_dashboard' );
     add_submenu_page( 'themator', __( 'Options',         'themator' ), __( 'Options',         'themator' ), 'manage_options', 'themator-options',        'themator_page_options' );
+    add_submenu_page( 'themator', __( 'Navigation',      'themator' ), __( 'Navigation',      'themator' ), 'manage_options', 'themator-navigation',     'themator_page_navigation' );
+    add_submenu_page( 'themator', __( 'Layout',          'themator' ), __( 'Layout',          'themator' ), 'manage_options', 'themator-layout',         'themator_page_layout' );
+    add_submenu_page( 'themator', __( 'SEO',             'themator' ), __( 'SEO',             'themator' ), 'manage_options', 'themator-seo',            'themator_page_seo' );
+    add_submenu_page( 'themator', __( 'Intégrations',    'themator' ), __( 'Intégrations',    'themator' ), 'manage_options', 'themator-integration',    'themator_page_integration' );
     add_submenu_page( 'themator', __( 'Bibliothèque',    'themator' ), __( 'Bibliothèque',    'themator' ), 'edit_posts',    'themator-library',        'themator_page_library' );
     add_submenu_page( 'themator', __( 'Import / Export', 'themator' ), __( 'Import / Export', 'themator' ), 'manage_options', 'themator-import-export',  'themator_page_import_export' );
     add_submenu_page( 'themator', __( 'Mises à jour',   'themator' ), __( 'Mises à jour',   'themator' ), 'manage_options', 'themator-updates',        'themator_page_updates' );
@@ -310,6 +314,10 @@ add_action( 'admin_menu', 'themator_register_admin_menu' );
 // Page callbacks
 function themator_page_dashboard()     { include THEMATOR_PLUGIN_DIR . 'admin/page-dashboard.php'; }
 function themator_page_options()       { include THEMATOR_PLUGIN_DIR . 'admin/page-options.php'; }
+function themator_page_navigation()    { include THEMATOR_PLUGIN_DIR . 'admin/page-navigation.php'; }
+function themator_page_layout()        { include THEMATOR_PLUGIN_DIR . 'admin/page-layout.php'; }
+function themator_page_seo()           { include THEMATOR_PLUGIN_DIR . 'admin/page-seo.php'; }
+function themator_page_integration()   { include THEMATOR_PLUGIN_DIR . 'admin/page-integration.php'; }
 function themator_page_library()       { include THEMATOR_PLUGIN_DIR . 'admin/page-library.php'; }
 function themator_page_import_export() { include THEMATOR_PLUGIN_DIR . 'admin/page-import-export.php'; }
 function themator_page_updates()       { include THEMATOR_PLUGIN_DIR . 'admin/page-updates.php'; }

@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (mod.width) el.style.flex = '0 0 ' + mod.width;
 
-        const typeLabel = { text: 'Texte', image: 'Image', button: 'Bouton', title: 'Titre' }[mod.type] || 'Module';
+        const typeLabel = { text:'Texte', image:'Image', button:'Bouton', title:'Titre', cta:'CTA', divider:'Séparateur', spacer:'Espace', gallery:'Galerie', testimonial:'Témoignage', accordion:'Accordéon', video:'Vidéo' }[mod.type] || 'Module';
         el.appendChild(createPill('module', mod.id, rowId, 'module-pill', typeLabel));
 
         const content = document.createElement('div');
@@ -283,6 +283,85 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tag = content.querySelector(level);
                 if (tag) mod.content = tag.innerHTML;
             };
+        } else if (mod.type === 'cta') {
+            content.contentEditable = 'false';
+            const align  = mod.align  || 'center';
+            const bg     = mod.bgColor || '#f8f4ff';
+            const btnBg  = mod.btnBg  || '#8f43ee';
+            const btnClr = mod.btnColor|| '#ffffff';
+            content.style.cssText = `background:${bg};padding:40px 30px;text-align:${align};border-radius:4px;`;
+            content.innerHTML = `
+                <h2 style="margin:0 0 10px;font-size:28px;color:#1a1a1a;">${mod.title || 'Titre accrocheur'}</h2>
+                <p style="margin:0 0 24px;font-size:16px;color:#555;">${mod.subtitle || 'Description de votre offre'}</p>
+                <a href="${mod.btnUrl || '#'}" style="display:inline-block;background:${btnBg};color:${btnClr};padding:14px 32px;border-radius:4px;font-weight:700;text-decoration:none;font-size:15px;">${mod.btnText || 'Découvrir'}</a>`;
+        } else if (mod.type === 'divider') {
+            content.contentEditable = 'false';
+            const dc = mod.dividerColor  || '#dddddd';
+            const dh = mod.dividerHeight || '2px';
+            const ds = mod.dividerStyle  || 'solid';
+            const dw = mod.dividerWidth  || '100%';
+            content.style.cssText = `text-align:${mod.align || 'center'};padding:10px 0;`;
+            content.innerHTML = `<hr style="border:none;border-top:${dh} ${ds} ${dc};width:${dw};margin:0 auto;">`;
+        } else if (mod.type === 'spacer') {
+            content.contentEditable = 'false';
+            const h = mod.height || '40px';
+            content.style.cssText = `height:${h};display:flex;align-items:center;justify-content:center;`;
+            content.innerHTML = `<span style="color:#ccc;font-size:11px;border:1px dashed #ddd;padding:4px 12px;border-radius:3px;">Espace : ${h}</span>`;
+        } else if (mod.type === 'gallery') {
+            content.contentEditable = 'false';
+            const cols = mod.columns || '3';
+            const gap  = mod.gap     || '10px';
+            const imgs = mod.images  || [];
+            if (imgs.length > 0) {
+                content.style.cssText = `display:grid;grid-template-columns:repeat(${cols},1fr);gap:${gap};padding:8px;`;
+                content.innerHTML = imgs.map(src => `<img src="${src}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;">`).join('');
+            } else {
+                content.style.cssText = 'padding:8px;';
+                content.innerHTML = `<div style="background:#f0f0f0;padding:30px;text-align:center;color:#aaa;border:2px dashed #ccc;border-radius:4px;">🖼️ Galerie : cliquez ⚙ pour ajouter des images</div>`;
+            }
+        } else if (mod.type === 'testimonial') {
+            content.contentEditable = 'false';
+            const stars = '★'.repeat(parseInt(mod.starRating || '5')) + '☆'.repeat(5 - parseInt(mod.starRating || '5'));
+            content.style.cssText = 'padding:24px;background:#fafafa;border-radius:6px;border-left:4px solid #8f43ee;';
+            content.innerHTML = `
+                <div style="color:#f39c12;font-size:18px;margin-bottom:12px;">${stars}</div>
+                <blockquote style="margin:0 0 16px;font-style:italic;font-size:15px;color:#444;line-height:1.6;">"${mod.quote || 'Témoignage client...'}"</blockquote>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    ${mod.avatar ? `<img src="${mod.avatar}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">` : ''}
+                    <div>
+                        <div style="font-weight:700;font-size:14px;color:#222;">${mod.author || 'Auteur'}</div>
+                        <div style="font-size:12px;color:#999;">${mod.role || ''}</div>
+                    </div>
+                </div>`;
+        } else if (mod.type === 'accordion') {
+            content.contentEditable = 'false';
+            const items = mod.items || [];
+            content.style.cssText = 'padding:8px;';
+            content.innerHTML = items.map((item, i) => `
+                <div style="border:1px solid #e0e0e0;border-radius:4px;margin-bottom:8px;overflow:hidden;">
+                    <button type="button" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
+                        style="width:100%;background:#f8f8f8;border:none;padding:14px 18px;text-align:left;font-size:14px;font-weight:600;cursor:pointer;color:#333;">
+                        ${item.title || 'Question ' + (i+1)}
+                    </button>
+                    <div style="display:${i===0?'block':'none'};padding:14px 18px;font-size:14px;color:#555;line-height:1.6;">
+                        ${item.content || 'Réponse...'}
+                    </div>
+                </div>`).join('');
+        } else if (mod.type === 'video') {
+            content.contentEditable = 'false';
+            content.style.cssText = 'padding:8px;';
+            if (mod.url) {
+                // Convert YouTube/Vimeo URLs to embed URLs
+                let embedUrl = mod.url;
+                const ytMatch = mod.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+                const vmMatch = mod.url.match(/vimeo\.com\/(\d+)/);
+                if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}${mod.autoplay ? '?autoplay=1' : ''}`;
+                if (vmMatch) embedUrl = `https://player.vimeo.com/video/${vmMatch[1]}`;
+                content.innerHTML = `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:4px;">
+                    <iframe src="${embedUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe></div>`;
+            } else {
+                content.innerHTML = `<div style="background:#1a1a1a;padding:60px;text-align:center;color:#555;border-radius:4px;">▶️ Cliquez ⚙ pour ajouter un lien vidéo YouTube ou Vimeo</div>`;
+            }
         } else {
             // text
             content.contentEditable = 'true';
@@ -429,10 +508,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Module picker ─────────────────────────────────────────────────────────
     function showModulePicker(rowId) {
         const types = [
-            { type: 'text',   icon: '📝', label: 'Texte' },
-            { type: 'title',  icon: '🔤', label: 'Titre' },
-            { type: 'image',  icon: '🖼️', label: 'Image' },
-            { type: 'button', icon: '🔘', label: 'Bouton' },
+            { type: 'text',        icon: '📝', label: 'Texte' },
+            { type: 'title',       icon: '🔤', label: 'Titre' },
+            { type: 'image',       icon: '🖼️', label: 'Image' },
+            { type: 'button',      icon: '🔘', label: 'Bouton' },
+            { type: 'cta',         icon: '📢', label: 'Call To Action' },
+            { type: 'divider',     icon: '➖', label: 'Séparateur' },
+            { type: 'spacer',      icon: '↕️', label: 'Espace' },
+            { type: 'gallery',     icon: '🖼️', label: 'Galerie' },
+            { type: 'testimonial', icon: '💬', label: 'Témoignage' },
+            { type: 'accordion',   icon: '📋', label: 'Accordéon' },
+            { type: 'video',       icon: '▶️', label: 'Vidéo' },
         ];
 
         const backdrop = document.createElement('div');
@@ -441,11 +527,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const picker = document.createElement('div');
         picker.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:6px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,0.25);z-index:1000001;min-width:320px;';
         picker.innerHTML = `<h3 style="margin:0 0 18px;font-size:15px;font-weight:700;">Choisir un module</h3>
-            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:420px;">
                 ${types.map(t => `
-                    <button type="button" data-mtype="${t.type}" style="border:2px solid #e0e0e0;border-radius:6px;padding:20px;cursor:pointer;background:#fff;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all .15s;">
-                        <span style="font-size:28px;">${t.icon}</span>
-                        <span style="font-size:13px;font-weight:600;color:#555;">${t.label}</span>
+                    <button type="button" data-mtype="${t.type}" style="border:2px solid #e0e0e0;border-radius:6px;padding:14px 10px;cursor:pointer;background:#fff;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s;">
+                        <span style="font-size:24px;">${t.icon}</span>
+                        <span style="font-size:11px;font-weight:600;color:#555;text-align:center;">${t.label}</span>
                     </button>
                 `).join('')}
             </div>`;
@@ -511,6 +597,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     title:  { type: 'title',  content: 'Votre titre', level: 'h2', align: 'left', txtColor: '#1a1a1a' },
                     image:  { type: 'image',  src: '', alt: '', caption: '' },
                     button: { type: 'button', content: 'Cliquez ici', url: '#', btnBg: '#8f43ee', btnColor: '#ffffff', align: 'center' },
+                    cta:    { type: 'cta',    title: 'Titre accrocheur', subtitle: 'Sous-titre de description', btnText: 'En savoir plus', btnUrl: '#', btnBg: '#8f43ee', btnColor: '#ffffff', bgColor: '#f8f4ff', align: 'center' },
+                    divider:{ type: 'divider', dividerColor: '#dddddd', dividerWidth: '100%', dividerHeight: '2px', dividerStyle: 'solid', align: 'center' },
+                    spacer: { type: 'spacer', height: '40px' },
+                    gallery:{ type: 'gallery', images: [], columns: '3', gap: '10px' },
+                    testimonial: { type: 'testimonial', quote: 'Un excellent service, je recommande vivement !', author: 'Jean Dupont', role: 'Patient', avatar: '', starRating: '5' },
+                    accordion:   { type: 'accordion', items: [ { title: 'Question 1', content: 'Réponse à la question 1...' }, { title: 'Question 2', content: 'Réponse à la question 2...' } ] },
+                    video:  { type: 'video', url: '', autoplay: false, loop: false, muted: true },
                 };
                 r.modules.push({ id: 'mod-' + uid(), ...defaults[mtype] });
                 render();
