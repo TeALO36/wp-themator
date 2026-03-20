@@ -79,43 +79,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewSizes = { desktop: '100%', tablet: '768px', mobile: '375px' };
     let currentPreview = 'desktop';
 
-    // Inject responsive buttons into the builder header (after the title)
-    const builderHeader = overlay ? overlay.querySelector('.tm-builder-header, #tm-header') : null;
-    const respBar = document.createElement('div');
-    respBar.id = 'tm-resp-bar';
-    respBar.style.cssText = 'display:flex;gap:2px;align-items:center;';
-    ['desktop','tablet','mobile'].forEach(mode => {
-        const icons = { desktop: '🖥', tablet: '📱', mobile: '📱' };
-        const labels = { desktop: 'Desktop', tablet: 'Tablet', mobile: 'Mobile' };
-        const iconsReal = { desktop: '🖥️', tablet: '📟', mobile: '📱' };
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.dataset.resp = mode;
-        btn.title = labels[mode];
-        btn.textContent = iconsReal[mode];
-        btn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:4px 8px;cursor:pointer;font-size:14px;transition:background .15s;';
-        btn.addEventListener('click', () => setResponsiveMode(mode));
-        respBar.appendChild(btn);
-    });
-    // Also add undo/redo buttons
-    const undoBtn = document.createElement('button');
-    undoBtn.type = 'button'; undoBtn.title = 'Annuler (Ctrl+Z)'; undoBtn.textContent = '↩'; 
-    undoBtn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:4px 8px;cursor:pointer;font-size:14px;margin-left:8px;';
-    undoBtn.onclick = undo;
-    const redoBtn = document.createElement('button');
-    redoBtn.type = 'button'; redoBtn.title = 'Rétablir (Ctrl+Y)'; redoBtn.textContent = '↪';
-    redoBtn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:4px 8px;cursor:pointer;font-size:14px;';
-    redoBtn.onclick = redo;
-    respBar.appendChild(undoBtn);
-    respBar.appendChild(redoBtn);
-
-    if (builderHeader) {
-        const saveArea = builderHeader.querySelector('#tm-apply-builder, button');
-        builderHeader.insertBefore(respBar, saveArea || builderHeader.firstChild);
-    } else {
-        // Append after builder title element if header not found
-        const topBar = overlay ? overlay.querySelector('.tm-top-bar, .tm-header') : null;
-        if (topBar) topBar.appendChild(respBar);
+    // Wire up resp + undo/redo buttons embedded in themator.php HTML
+    const respBar = overlay ? overlay.querySelector('#tm-resp-bar') : null;
+    const undoBtnEl = overlay ? overlay.querySelector('#tm-undo-btn') : null;
+    const redoBtnEl = overlay ? overlay.querySelector('#tm-redo-btn') : null;
+    if (undoBtnEl) undoBtnEl.onclick = undo;
+    if (redoBtnEl) redoBtnEl.onclick = redo;
+    if (respBar) {
+        respBar.querySelectorAll('button[data-resp]').forEach(b => {
+            b.addEventListener('click', () => setResponsiveMode(b.dataset.resp));
+        });
     }
 
     function setResponsiveMode(mode) {

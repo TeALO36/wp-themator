@@ -3,7 +3,7 @@
  * Plugin Name: Themator
  * Plugin URI:  https://github.com/TeALO36/wp-themator
  * Description: Un constructeur de pages visuel premium avec mode plein écran et design fluide.
- * Version:     1.1.0
+ * Version:     1.1.1
  * Author:      Teano
  * Text Domain: themator
  */
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; 
 }
 
-define( 'THEMATOR_VERSION', '1.1.0' );
+define( 'THEMATOR_VERSION', '1.1.1' );
 define( 'THEMATOR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'THEMATOR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -121,6 +121,14 @@ function themator_meta_box_html( $post ) {
 
         <div class="tm-builder-topbar">
             <span class="tm-topbar-page-name">Themator Builder</span>
+            <div class="tm-topbar-center" id="tm-resp-bar" style="display:flex;gap:4px;align-items:center;">
+                <button type="button" data-resp="desktop" title="Desktop" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:5px 10px;cursor:pointer;font-size:13px;">🖥️</button>
+                <button type="button" data-resp="tablet"  title="Tablette" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:5px 10px;cursor:pointer;font-size:13px;">📟</button>
+                <button type="button" data-resp="mobile"  title="Mobile"   style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:5px 10px;cursor:pointer;font-size:13px;">📱</button>
+                <span style="width:1px;height:20px;background:rgba(255,255,255,0.2);margin:0 6px;display:inline-block;"></span>
+                <button type="button" id="tm-undo-btn" title="Annuler (Ctrl+Z)" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:5px 10px;cursor:pointer;font-size:14px;">↩</button>
+                <button type="button" id="tm-redo-btn" title="Rétablir (Ctrl+Y)" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:5px 10px;cursor:pointer;font-size:14px;">↪</button>
+            </div>
             <div class="tm-topbar-actions">
                 <button type="button" class="tm-topbar-btn primary" id="tm-apply-builder">Enregistrer</button>
             </div>
