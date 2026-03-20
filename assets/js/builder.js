@@ -955,7 +955,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalBody.appendChild(field('Filtre CSS', 'imgStyle', node, 'text', { placeholder: 'ex: grayscale(100%) brightness(1.2)' }));
             }
 
-        } else if (isAdvanced) {
+            // ▸ Animation (Divi-style)
+            modalBody.appendChild(sectionHeader('🎬 Animation'));
+            const animPresets = document.createElement('div');
+            animPresets.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;';
+            [
+                { label: '🚫 Aucune',       value: '' },
+                { label: '✨ Fade In',       value: 'tm-anim-fade' },
+                { label: '⬆️ Slide Haut',   value: 'tm-anim-slide-up' },
+                { label: '⬅️ Slide Gauche', value: 'tm-anim-slide-left' },
+                { label: '➡️ Slide Droite', value: 'tm-anim-slide-right' },
+                { label: '🔍 Zoom In',       value: 'tm-anim-zoom' },
+                { label: '↩️ Bounce',        value: 'tm-anim-bounce' },
+                { label: '🌀 Flip',          value: 'tm-anim-flip' },
+                { label: '🔄 Rotation',      value: 'tm-anim-rotate' },
+            ].forEach(preset => {
+                const pb = document.createElement('button');
+                pb.type = 'button';
+                pb.textContent = preset.label;
+                const isActive = (node.animation || '') === preset.value;
+                pb.style.cssText = `padding:6px 4px;font-size:11px;border:1px solid ${isActive?'#8f43ee':'#e0e0e0'};border-radius:3px;cursor:pointer;background:${isActive?'#f0eeff':'#f9f9f9'};font-weight:${isActive?'700':'400'};`;
+                pb.onclick = () => {
+                    node.animation = preset.value;
+                    // Refresh the animation section
+                    animPresets.querySelectorAll('button').forEach(b => { b.style.borderColor='#e0e0e0'; b.style.background='#f9f9f9'; b.style.fontWeight='400'; });
+                    pb.style.borderColor = '#8f43ee'; pb.style.background = '#f0eeff'; pb.style.fontWeight = '700';
+                };
+                animPresets.appendChild(pb);
+            });
+            modalBody.appendChild(animPresets);
+            modalBody.appendChild(field('Durée (ms)', 'animDuration', node, 'text', { placeholder: '600', default: '600' }));
+            modalBody.appendChild(field('Délai (ms)', 'animDelay', node, 'text', { placeholder: '0', default: '0' }));
+            modalBody.appendChild(field('Intensité (1–3)', 'animIntensity', node, 'select', { options: [['1','1 — Léger'],['2','2 — Moyen'],['3','3 — Fort']] }));
+
             // ── Advanced tab ─────────────────────────────────────────────────
             modalBody.appendChild(sectionHeader('🔧 CSS Personnalisé'));
             modalBody.appendChild(field('ID CSS', 'cssId', node, 'text', { placeholder: 'mon-element' }));
@@ -1045,30 +1077,55 @@ document.addEventListener('DOMContentLoaded', () => {
             const secCss = nodeToInlineCSS(sec) || 'background-color:#fff;padding:60px 20px;';
             const secId  = sec.cssId   ? ` id="${sec.cssId}"` : '';
             const secCls = sec.cssClass ? ` ${sec.cssClass}` : '';
-            html += `<section class="tm-front-section${secCls}"${secId} style="${secCss}">`;
+            const secAnim = sec.animation ? ` data-tm-animation="${sec.animation}" data-tm-duration="${sec.animDuration||600}" data-tm-delay="${sec.animDelay||0}"` : '';
+            html += `<section class="tm-front-section${secCls}"${secId}${secAnim} style="${secCss}">`;
             (sec.rows || []).forEach(row => {
                 const rowCss = nodeToInlineCSS(row);
                 const rowId  = row.cssId   ? ` id="${row.cssId}"` : '';
                 const rowCls = row.cssClass ? ` ${row.cssClass}` : '';
-                html += `<div class="tm-front-row${rowCls}"${rowId} style="display:flex;flex-wrap:wrap;max-width:1080px;margin:0 auto;${rowCss}">`;
+                const rowAnim = row.animation ? ` data-tm-animation="${row.animation}" data-tm-duration="${row.animDuration||600}" data-tm-delay="${row.animDelay||0}"` : '';
+                html += `<div class="tm-front-row${rowCls}"${rowId}${rowAnim} style="display:flex;flex-wrap:wrap;max-width:1080px;margin:0 auto;${rowCss}">`;
                 (row.modules || []).forEach(mod => {
                     const w      = mod.width  ? `flex:0 0 ${mod.width};` : 'flex:1;';
                     const modCss = nodeToInlineCSS(mod);
                     const modId  = mod.cssId   ? ` id="${mod.cssId}"` : '';
                     const modCls = mod.cssClass ? ` ${mod.cssClass}` : '';
+                    const animCls = mod.animation ? ` ${mod.animation}` : '';
+                    const animAttr = mod.animation ? ` data-tm-animation="${mod.animation}" data-tm-duration="${mod.animDuration||600}" data-tm-delay="${mod.animDelay||0}"` : '';
                     const respCls = [
                         mod.hideDesktop ? 'tm-hide-desktop' : '',
                         mod.hideTablet  ? 'tm-hide-tablet'  : '',
                         mod.hideMobile  ? 'tm-hide-mobile'  : '',
                     ].filter(Boolean).join(' ');
-                    html += `<div class="tm-front-module${modCls ? ' '+modCls : ''}${respCls ? ' '+respCls : ''}"${modId} style="${w}box-sizing:border-box;${modCss}">`;
+                    html += `<div class="tm-front-module${modCls?' '+modCls:''}${animCls}${respCls?' '+respCls:''}"${modId}${animAttr} style="${w}box-sizing:border-box;${modCss}">`;
                     if (mod.type === 'image' && mod.src) {
-                        html += `<img src="${mod.src}" alt="${mod.alt||''}" style="max-width:100%;height:auto;${mod.imgStyle||''}">`;
+                        html += `<img src="${mod.src}" alt="${mod.alt||""}" style="max-width:100%;height:auto;${mod.imgStyle||""}">`;
                         if (mod.caption) html += `<p style="text-align:center;font-size:13px;color:#888;">${mod.caption}</p>`;
                     } else if (mod.type === 'button') {
                         const tgt = mod.target ? ` target="${mod.target}"` : '';
                         const btnRadius = mod.borderRadius ? `border-radius:${mod.borderRadius};` : 'border-radius:4px;';
-                        html += `<div style="text-align:${mod.align||'center'};"><a href="${mod.url||'#'}"${tgt} style="display:inline-block;background:${mod.btnBg||'#8f43ee'};color:${mod.btnColor||'#fff'};padding:12px 28px;${btnRadius}font-weight:700;text-decoration:none;font-size:${mod.fontSize||'15px'};">${mod.content||'Cliquez ici'}</a></div>`;
+                        html += `<div style="text-align:${mod.align||'center'};"><a href="${mod.url||'#'}"${tgt} style="display:inline-block;background:${mod.btnBg||'#8f43ee'};color:${mod.btnColor||'#fff'};padding:12px 28px;${btnRadius}font-weight:700;text-decoration:none;font-size:${mod.fontSize||'15px'};"> ${mod.content||'Cliquez ici'}</a></div>`;
+                    } else if (mod.type === 'cta') {
+                        const btnBg  = mod.btnBg  || '#8f43ee';
+                        const btnClr = mod.btnColor|| '#ffffff';
+                        html += `<div style="background:${mod.bgColor||'#f8f4ff'};padding:40px 30px;text-align:${mod.align||'center'};border-radius:4px;"><h2 style="margin:0 0 10px;font-size:28px;color:#1a1a1a;">${mod.title||''}</h2><p style="margin:0 0 24px;font-size:16px;color:#555;">${mod.subtitle||''}</p><a href="${mod.btnUrl||'#'}" style="display:inline-block;background:${btnBg};color:${btnClr};padding:14px 32px;border-radius:4px;font-weight:700;text-decoration:none;font-size:15px;">${mod.btnText||'Découvrir'}</a></div>`;
+                    } else if (mod.type === 'divider') {
+                        const dc = mod.dividerColor||'#ddd'; const dh = mod.dividerHeight||'2px'; const ds = mod.dividerStyle||'solid'; const dw = mod.dividerWidth||'100%';
+                        html += `<div style="text-align:${mod.align||'center'};padding:10px 0;"><hr style="border:none;border-top:${dh} ${ds} ${dc};width:${dw};margin:0 auto;"></div>`;
+                    } else if (mod.type === 'spacer') {
+                        html += `<div style="height:${mod.height||'40px'};"></div>`;
+                    } else if (mod.type === 'gallery') {
+                        const cols = mod.columns||'3'; const gap = mod.gap||'10px'; const imgs = mod.images||[];
+                        html += `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:${gap};padding:8px;">${imgs.map(src=>`<img src="${src}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;">`).join('')}</div>`;
+                    } else if (mod.type === 'testimonial') {
+                        const stars = '★'.repeat(parseInt(mod.starRating||'5'))+'☆'.repeat(5-parseInt(mod.starRating||'5'));
+                        html += `<div style="padding:24px;background:#fafafa;border-radius:6px;border-left:4px solid #8f43ee;"><div style="color:#f39c12;font-size:18px;margin-bottom:12px;">${stars}</div><blockquote style="margin:0 0 16px;font-style:italic;font-size:15px;color:#444;line-height:1.6;">&ldquo;${mod.quote||''}&rdquo;</blockquote><div style="display:flex;align-items:center;gap:12px;">${mod.avatar?`<img src="${mod.avatar}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`:''}<div><div style="font-weight:700;font-size:14px;color:#222;">${mod.author||''}</div><div style="font-size:12px;color:#999;">${mod.role||''}</div></div></div></div>`;
+                    } else if (mod.type === 'accordion') {
+                        const items = mod.items||[]; let accHtml = `<div class="tm-accordion">`;
+                        items.forEach((item,i) => { accHtml += `<div class="tm-accordion-item"><button class="tm-accordion-btn" onclick="var p=this.nextElementSibling;p.style.display=p.style.display==='none'?'block':'none'">${item.title||''}</button><div class="tm-accordion-body" style="display:${i===0?'block':'none'}">${item.content||''}</div></div>`; });
+                        html += accHtml + `</div>`;
+                    } else if (mod.type === 'video') {
+                        if (mod.url) { let eu=mod.url; const yt=mod.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/); const vm=mod.url.match(/vimeo\.com\/(\d+)/); if(yt)eu=`https://www.youtube.com/embed/${yt[1]}`; if(vm)eu=`https://player.vimeo.com/video/${vm[1]}`; html+=`<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;"><iframe src="${eu}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe></div>`; }
                     } else {
                         html += `<div>${mod.content||''}</div>`;
                     }
@@ -1078,6 +1135,30 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             html += '</section>';
         });
+        // Scroll-animation observer script
+        html += `<script>
+(function(){
+    const els = document.querySelectorAll('[data-tm-animation]');
+    if (!els.length) return;
+    const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                const el = e.target;
+                const anim = el.dataset.tmAnimation;
+                const dur = el.dataset.tmDuration || 600;
+                const delay = el.dataset.tmDelay || 0;
+                setTimeout(() => { el.classList.add(anim, 'tm-anim-visible'); }, parseInt(delay));
+                el.style.animationDuration = dur + 'ms';
+                obs.unobserve(el);
+            }
+        });
+    }, { threshold: 0.15 });
+    els.forEach(el => {
+        el.classList.add('tm-anim-hidden');
+        obs.observe(el);
+    });
+})();
+<\/script>`;
         html += '</div>';
         return html;
     }

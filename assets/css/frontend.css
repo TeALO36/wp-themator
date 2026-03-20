@@ -10,7 +10,6 @@
 
 .tm-front-section {
   width: 100%;
-  border-radius: 4px; /* Premium touch */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,10 +18,9 @@
 
 .tm-front-row {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1080px;
   display: flex;
   flex-wrap: wrap;
-  gap: 2rem;
   margin: 0 auto;
   box-sizing: border-box;
 }
@@ -38,9 +36,82 @@
   height: auto;
 }
 
+/* ── Accordion ────────────────────────────────────────────── */
+.tm-accordion { width: 100%; }
+.tm-accordion-item { margin-bottom: 8px; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; }
+.tm-accordion-btn {
+  width: 100%; background: #f8f8f8; border: none;
+  padding: 16px 20px; text-align: left;
+  font-size: 15px; font-weight: 600; cursor: pointer; color: #333;
+  transition: background .2s;
+}
+.tm-accordion-btn:hover { background: #f0eeff; color: #8f43ee; }
+.tm-accordion-body { padding: 16px 20px; font-size: 15px; color: #555; line-height: 1.7; }
+
+/* ── Animations – scroll-triggered ───────────────────────── */
+.tm-anim-hidden {
+  opacity: 0;
+  will-change: opacity, transform;
+}
+.tm-anim-visible {
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(.22,.61,.36,1);
+}
+
+/* Presets (applied when IntersectionObserver fires) */
+.tm-anim-fade.tm-anim-visible           { animation-name: tm-fade; }
+.tm-anim-slide-up.tm-anim-visible       { animation-name: tm-slide-up; }
+.tm-anim-slide-left.tm-anim-visible     { animation-name: tm-slide-left; }
+.tm-anim-slide-right.tm-anim-visible    { animation-name: tm-slide-right; }
+.tm-anim-zoom.tm-anim-visible           { animation-name: tm-zoom; }
+.tm-anim-bounce.tm-anim-visible         { animation-name: tm-bounce; animation-timing-function: cubic-bezier(.36,.07,.19,.97); }
+.tm-anim-flip.tm-anim-visible           { animation-name: tm-flip; }
+.tm-anim-rotate.tm-anim-visible         { animation-name: tm-rotate; }
+
+@keyframes tm-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes tm-slide-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes tm-slide-left {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes tm-slide-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes tm-zoom {
+  from { opacity: 0; transform: scale(.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes tm-bounce {
+  0%   { opacity: 0; transform: translateY(40px); }
+  60%  { opacity: 1; transform: translateY(-10px); }
+  80%  { transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes tm-flip {
+  from { opacity: 0; transform: perspective(400px) rotateX(-80deg); }
+  to   { opacity: 1; transform: perspective(400px) rotateX(0); }
+}
+@keyframes tm-rotate {
+  from { opacity: 0; transform: rotate(-15deg) scale(.9); }
+  to   { opacity: 1; transform: rotate(0) scale(1); }
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .tm-front-row {
-      flex-direction: column;
-      gap: 1rem;
-  }
+  .tm-front-row { flex-direction: column; }
+  .tm-hide-mobile { display: none !important; }
+  .tm-front-module { min-width: 100%; }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .tm-hide-tablet { display: none !important; }
+}
+@media (min-width: 1025px) {
+  .tm-hide-desktop { display: none !important; }
 }
