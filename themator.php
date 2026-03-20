@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Themator
- * Plugin URI:  https://github.com/teano/wp-themator
+ * Plugin URI:  https://github.com/TeALO36/wp-themator
  * Description: Un constructeur de pages visuel premium avec mode plein écran et design fluide.
  * Version:     1.0.0
  * Author:      Teano
@@ -204,12 +204,17 @@ class ThematorUpdater {
     public function push_update( $transient ) {
         if ( empty( $transient->checked ) ) return $transient;
         $remote = $this->get_remote();
-        if ( $remote && version_compare( THEMATOR_VERSION, $remote->tag_name, '<' ) ) {
-            $obj = new stdClass();
-            $obj->slug = 'themator';
-            $obj->new_version = $remote->tag_name;
-            $obj->package = $remote->assets[0]->browser_download_url;
-            $transient->response[ $this->slug ] = $obj;
+        if ( $remote && isset( $remote->tag_name ) ) {
+            $remote_version = ltrim( $remote->tag_name, 'v' );
+            if ( version_compare( THEMATOR_VERSION, $remote_version, '<' ) ) {
+                $obj = new stdClass();
+                $obj->slug = 'themator';
+                $obj->plugin = plugin_basename( __FILE__ );
+                $obj->new_version = $remote_version;
+                $obj->url = 'https://github.com/' . $this->repo;
+                $obj->package = isset( $remote->assets[0] ) ? $remote->assets[0]->browser_download_url : '';
+                $transient->response[ $this->slug ] = $obj;
+            }
         }
         return $transient;
     }
@@ -217,13 +222,17 @@ class ThematorUpdater {
     public function plugin_popup( $result, $action, $args ) {
         if ( 'plugin_information' !== $action || $args->slug !== 'themator' ) return $result;
         $remote = $this->get_remote();
+        if ( ! $remote ) return $result;
         $obj = new stdClass();
         $obj->name = 'Themator';
         $obj->slug = 'themator';
-        $obj->version = $remote->tag_name;
-        $obj->last_updated = $remote->published_at;
-        $obj->sections = [ 'description' => 'Themator Premium Builder Auto-Update.' ];
-        $obj->download_link = $remote->assets[0]->browser_download_url;
+        $obj->version = ltrim( $remote->tag_name, 'v' );
+        $obj->last_updated = isset( $remote->published_at ) ? $remote->published_at : '';
+        $obj->sections = [ 
+            'description' => 'Themator Premium Builder Auto-Update.',
+            'changelog' => wp_kses_post( isset( $remote->body ) ? $remote->body : '' )
+        ];
+        $obj->download_link = isset( $remote->assets[0] ) ? $remote->assets[0]->browser_download_url : '';
         return $obj;
     }
 
@@ -236,4 +245,4 @@ class ThematorUpdater {
         return $this->githubAPIResult;
     }
 }
-new ThematorUpdater( 'teano/wp-themator' );
+new ThematorUpdater( 'TeALO36/wp-themator' );

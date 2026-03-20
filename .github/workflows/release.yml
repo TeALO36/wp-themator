@@ -9,18 +9,23 @@ jobs:
   build:
     name: Create Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Create Zip
         run: |
-          zip -r themator.zip . -x "*.git*" "node_modules/*" ".github/*" "C:/*" "D:/*" "brain/*"
+          mkdir themator
+          rsync -a --exclude='.git' --exclude='.github' --exclude='themator' --exclude='*.zip' ./ themator/
+          zip -r themator.zip themator/
 
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
           files: themator.zip
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
