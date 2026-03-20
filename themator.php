@@ -246,3 +246,137 @@ class ThematorUpdater {
     }
 }
 new ThematorUpdater( 'TeALO36/wp-themator' );
+
+/**
+ * ================================================================
+ * ADMIN MENU (style Divi)
+ * ================================================================
+ */
+
+/**
+ * Header helper — rendered at top of each admin page
+ */
+function themator_admin_header( $page_title = '' ) {
+    ?>
+    <div class="tm-admin-header">
+        <div class="tm-admin-header-logo">
+            THEMATOR
+            <?php if ( $page_title ) : ?>
+                <span>/ <?php echo esc_html( $page_title ); ?></span>
+            <?php endif; ?>
+        </div>
+        <span class="tm-admin-header-badge">Premium Builder</span>
+        <span class="tm-admin-header-badge" style="background:rgba(0,226,99,0.25); color:#00e263;">
+            v<?php echo esc_html( THEMATOR_VERSION ); ?>
+        </span>
+    </div>
+    <?php
+}
+
+/**
+ * Register top-level menu + sub-pages
+ */
+function themator_register_admin_menu() {
+    // SVG icon (purple T)
+    $icon = 'data:image/svg+xml;base64,' . base64_encode( '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><text y="16" font-size="16" font-family="Arial" font-weight="bold" fill="#a0a5aa">T</text></svg>' );
+
+    add_menu_page(
+        __( 'Themator', 'themator' ),
+        __( 'Themator', 'themator' ),
+        'edit_posts',
+        'themator',
+        'themator_page_dashboard',
+        $icon,
+        25
+    );
+
+    add_submenu_page( 'themator', __( 'Tableau de bord', 'themator' ), __( 'Tableau de bord', 'themator' ), 'edit_posts',    'themator',                'themator_page_dashboard' );
+    add_submenu_page( 'themator', __( 'Options',         'themator' ), __( 'Options',         'themator' ), 'manage_options', 'themator-options',        'themator_page_options' );
+    add_submenu_page( 'themator', __( 'Bibliothèque',    'themator' ), __( 'Bibliothèque',    'themator' ), 'edit_posts',    'themator-library',        'themator_page_library' );
+    add_submenu_page( 'themator', __( 'Import / Export', 'themator' ), __( 'Import / Export', 'themator' ), 'manage_options', 'themator-import-export',  'themator_page_import_export' );
+    add_submenu_page( 'themator', __( 'Mises à jour',   'themator' ), __( 'Mises à jour',   'themator' ), 'manage_options', 'themator-updates',        'themator_page_updates' );
+}
+add_action( 'admin_menu', 'themator_register_admin_menu' );
+
+// Page callbacks
+function themator_page_dashboard()     { include THEMATOR_PLUGIN_DIR . 'admin/page-dashboard.php'; }
+function themator_page_options()       { include THEMATOR_PLUGIN_DIR . 'admin/page-options.php'; }
+function themator_page_library()       { include THEMATOR_PLUGIN_DIR . 'admin/page-library.php'; }
+function themator_page_import_export() { include THEMATOR_PLUGIN_DIR . 'admin/page-import-export.php'; }
+function themator_page_updates()       { include THEMATOR_PLUGIN_DIR . 'admin/page-updates.php'; }
+
+/**
+ * Enqueue admin CSS on Themator pages
+ */
+function themator_enqueue_admin_panel_assets( $hook ) {
+    $themator_pages = array(
+        'toplevel_page_themator',
+        'themator_page_themator-options',
+        'themator_page_themator-library',
+        'themator_page_themator-import-export',
+        'themator_page_themator-updates',
+    );
+    if ( ! in_array( $hook, $themator_pages, true ) ) return;
+
+    wp_enqueue_style(
+        'themator-admin-css',
+        plugins_url( 'assets/css/admin.css', __FILE__ ),
+        array(),
+        THEMATOR_VERSION
+    );
+}
+add_action( 'admin_enqueue_scripts', 'themator_enqueue_admin_panel_assets' );
+
+/**
+ * Register "tmator_layout" Custom Post Type (for Bibliothèque)
+ */
+function themator_register_layout_cpt() {
+    register_post_type( 'tmator_layout', array(
+        'label'        => __( 'Modèles Themator', 'themator' ),
+        'public'       => false,
+        'show_ui'      => false,
+        'show_in_menu' => false,
+        'supports'     => array( 'title', 'custom-fields' ),
+    ) );
+}
+add_action( 'init', 'themator_register_layout_cpt' );
+
+/**
+ * AJAX: Export layouts as JSON download
+ */
+function themator_ajax_export_layouts() {
+    check_admin_referer( 'themator_export' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorized' );
+
+    $layouts = get_posts( array(
+        'post_type'      => 'tmator_layout',
+        'posts_per_page' => -1,
+    ) );
+
+    $export = array( 'version' => THEMATOR_VERSION, 'layouts' => array() );
+    foreach ( $layouts as $l ) {
+        $export['layouts'][] = array(
+            'title' => $l->post_title,
+            'data'  => get_post_meta( $l->ID, '_themator_data', true ),
+        );
+    }
+
+    $filename = 'themator-export-' . date( 'Y-m-d' ) . '.json';
+    nocache_headers();
+    header( 'Content-Type: application/json; charset=utf-8' );
+    header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+    echo wp_json_encode( $export, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+    exit;
+}
+add_action( 'wp_ajax_themator_export_layouts', 'themator_ajax_export_layouts' );
+
+/**
+ * Inject custom CSS from Options into frontend <head>
+ */
+function themator_inject_custom_css() {
+    $css = get_option( 'tmopt_custom_css', '' );
+    if ( ! empty( $css ) ) {
+        echo '<style id="themator-custom-css">' . wp_strip_all_tags( $css ) . '</style>';
+    }
+}
+add_action( 'wp_head', 'themator_inject_custom_css' );

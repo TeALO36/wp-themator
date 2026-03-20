@@ -1,0 +1,388 @@
+/* ================================================================
+   THEMATOR ADMIN PANEL — Style inspiré de Divi
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+
+:root {
+  --tm-purple:  #8f43ee;
+  --tm-purple-dark: #7b32d9;
+  --tm-purple-light: #a56cf5;
+  --tm-green:   #00e263;
+  --tm-dark:    #1d2327;
+  --tm-grey:    #f0f0f1;
+  --tm-border:  #c3c4c7;
+  --tm-text:    #3c434a;
+}
+
+/* ── Wrap général ─────────────────────────────────────────────── */
+.themator-admin-wrap {
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--tm-text);
+  margin: 20px 20px 20px 0;
+}
+
+/* ── Header de page ──────────────────────────────────────────── */
+.tm-admin-header {
+  background: linear-gradient(135deg, #8f43ee 0%, #5c2ba0 100%);
+  border-radius: 6px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 4px 20px rgba(143, 67, 238, 0.3);
+}
+
+.tm-admin-header-logo {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.04em;
+  flex: 1;
+}
+.tm-admin-header-logo span {
+  opacity: 0.6;
+  font-weight: 400;
+  font-size: 13px;
+  margin-left: 8px;
+}
+
+.tm-admin-header-badge {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Nav tabs ─────────────────────────────────────────────────── */
+.tm-admin-nav {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--tm-border);
+  margin-bottom: 24px;
+}
+
+.tm-admin-nav a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  color: #666;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s;
+}
+
+.tm-admin-nav a:hover { color: var(--tm-purple); }
+.tm-admin-nav a.active {
+  color: var(--tm-purple);
+  border-bottom-color: var(--tm-purple);
+}
+
+/* ── Cards ────────────────────────────────────────────────────── */
+.tm-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.tm-card {
+  background: #fff;
+  border: 1px solid var(--tm-border);
+  border-radius: 6px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: box-shadow 0.2s;
+}
+.tm-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+
+.tm-card-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.tm-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--tm-text);
+}
+
+.tm-card-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--tm-purple);
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+.tm-card-sub {
+  font-size: 12px;
+  color: #999;
+}
+
+/* ── Section content area ─────────────────────────────────────── */
+.tm-admin-section {
+  background: #fff;
+  border: 1px solid var(--tm-border);
+  border-radius: 6px;
+  padding: 28px 32px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.tm-admin-section h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tm-text);
+  margin: 0 0 20px 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--tm-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Form fields ──────────────────────────────────────────────── */
+.tm-field-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  align-items: start;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f1;
+}
+.tm-field-row:last-child { border-bottom: none; }
+
+.tm-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tm-text);
+  padding-top: 8px;
+}
+
+.tm-field-desc {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+.tm-field-row input[type="text"],
+.tm-field-row input[type="color"],
+.tm-field-row select,
+.tm-field-row textarea {
+  width: 100%;
+  max-width: 400px;
+  padding: 8px 12px;
+  border: 1px solid var(--tm-border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--tm-text);
+  background: #fafbfc;
+  transition: border-color 0.15s;
+}
+.tm-field-row input:focus,
+.tm-field-row select:focus,
+.tm-field-row textarea:focus {
+  outline: none;
+  border-color: var(--tm-purple);
+  background: #fff;
+}
+.tm-field-row input[type="color"] {
+  width: 48px;
+  height: 38px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.tm-field-row textarea {
+  min-height: 100px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  max-width: 600px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.tm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s, opacity 0.15s;
+  text-decoration: none;
+}
+.tm-btn:hover { filter: brightness(1.08); }
+
+.tm-btn-primary {
+  background: var(--tm-purple);
+  color: #fff;
+}
+.tm-btn-success {
+  background: var(--tm-green);
+  color: rgba(0,0,0,0.75);
+}
+.tm-btn-secondary {
+  background: #f0f0f1;
+  color: var(--tm-text);
+  border: 1px solid var(--tm-border);
+}
+.tm-btn-danger {
+  background: #d63638;
+  color: #fff;
+}
+
+.tm-btn-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--tm-border);
+}
+
+/* ── Library grid ─────────────────────────────────────────────── */
+.tm-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.tm-layout-card {
+  border: 1px solid var(--tm-border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+  background: #fff;
+}
+.tm-layout-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+
+.tm-layout-thumb {
+  height: 120px;
+  background: linear-gradient(135deg, #f0f0f1 0%, #e0e0e0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #bbb;
+}
+
+.tm-layout-info {
+  padding: 12px;
+}
+
+.tm-layout-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--tm-text);
+}
+
+.tm-layout-meta {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+.tm-layout-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ── Updates page ─────────────────────────────────────────────── */
+.tm-version-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 0;
+}
+
+.tm-version-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.tm-version-badge.current { background: #e8f5e9; color: #2e7d32; }
+.tm-version-badge.latest  { background: #ede7f6; color: #6a1b9a; }
+.tm-version-badge.outdated{ background: #fff3e0; color: #e65100; }
+
+/* ── Notice / alert ───────────────────────────────────────────── */
+.tm-notice {
+  padding: 14px 18px;
+  border-radius: 4px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tm-notice-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+.tm-notice-info    { background: #ede7f6; color: #4a148c; border-left: 4px solid var(--tm-purple); }
+.tm-notice-warning { background: #fff3e0; color: #bf360c; border-left: 4px solid #ff9800; }
+
+/* ── Import/Export zone ──────────────────────────────────────── */
+.tm-upload-zone {
+  border: 2px dashed var(--tm-border);
+  border-radius: 6px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin: 16px 0;
+}
+.tm-upload-zone:hover {
+  border-color: var(--tm-purple);
+  background: #f9f6ff;
+}
+.tm-upload-zone p {
+  color: #999;
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+/* ── Roles table ──────────────────────────────────────────────── */
+.tm-roles-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tm-roles-table th,
+.tm-roles-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--tm-border);
+  font-size: 13px;
+}
+.tm-roles-table th {
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #999;
+  background: #fafbfc;
+}
+.tm-roles-table tr:last-child td { border-bottom: none; }
+
+/* ── Icon menu in WP sidebar ─────────────────────────────────── */
+#adminmenu .tm-menu-icon img {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+}
