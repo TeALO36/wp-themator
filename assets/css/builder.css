@@ -24,6 +24,43 @@
 
 #themator-builder-overlay * { box-sizing: border-box; }
 
+/* ===== FULLSCREEN MODE: Hide all WordPress admin UI ===== */
+body.themator-fullscreen {
+  overflow: hidden !important;
+}
+
+/* Hide WordPress admin bar */
+body.themator-fullscreen #wpadminbar {
+  display: none !important;
+}
+
+/* Hide WordPress admin menu / sidebar */
+body.themator-fullscreen #adminmenuwrap,
+body.themator-fullscreen #adminmenuback {
+  display: none !important;
+}
+
+/* Hide Gutenberg top bar and editor sidebar */
+body.themator-fullscreen .edit-post-header,
+body.themator-fullscreen .editor-header,
+body.themator-fullscreen .interface-interface-skeleton__sidebar,
+body.themator-fullscreen .edit-post-sidebar,
+body.themator-fullscreen .interface-interface-skeleton__header,
+body.themator-fullscreen .interface-interface-skeleton__left-sidebar,
+body.themator-fullscreen .components-notice-list {
+  display: none !important;
+}
+
+/* Expand the page to full width (remove WP side margins) */
+body.themator-fullscreen #wpwrap,
+body.themator-fullscreen #wpcontent,
+body.themator-fullscreen #wpbody,
+body.themator-fullscreen #wpbody-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+
 
 /* ===== TOP ADMIN BAR ===== */
 .tm-admin-bar {

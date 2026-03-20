@@ -49,14 +49,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // =====================================
     launchBtn.addEventListener('click', (e) => {
         e.preventDefault();
+        // Move the overlay to the top-level body to escape Gutenberg's stacking context
+        if (overlay.parentElement !== document.body) {
+            document.body.appendChild(overlay);
+        }
         overlay.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+        document.body.classList.add('themator-fullscreen');
         render();
     });
 
     closeBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
-        document.body.style.overflow = '';
+        document.body.classList.remove('themator-fullscreen');
     });
 
     // =====================================
@@ -81,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             applyBtn.textContent = 'Enregistrer';
             overlay.style.display = 'none';
-            document.body.style.overflow = '';
+            document.body.classList.remove('themator-fullscreen');
         }, 1200);
     });
 
