@@ -32,13 +32,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const uid = () => 'tm' + Date.now() + Math.floor(Math.random() * 9999);
 
+    // ── History (undo/redo) ───────────────────────────────────────────────────
+    const history = [];
+    let historyIdx = -1;
+    function pushHistory() {
+        history.splice(historyIdx + 1);
+        history.push(JSON.stringify(state));
+        if (history.length > 50) history.shift();
+        historyIdx = history.length - 1;
+    }
+    function undo() { if (historyIdx > 0) { historyIdx--; state = JSON.parse(history[historyIdx]); render(); } }
+    function redo() { if (historyIdx < history.length - 1) { historyIdx++; state = JSON.parse(history[historyIdx]); render(); } }
+    document.addEventListener('keydown', (e) => {
+        if (!overlay || overlay.style.display === 'none') return;
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') { e.preventDefault(); undo(); }
+        if ((e.ctrlKey || e.metaKey) && (e.shiftKey && e.key === 'z' || e.key === 'y')) { e.preventDefault(); redo(); }
+    });
+
+    // ── Clipboard (copy/paste styles) ────────────────────────────────────────
+    let copiedStyles = null;
+
     // ── Launch / Close ────────────────────────────────────────────────────────
     launchBtn.addEventListener('click', (e) => {
         e.preventDefault();
         if (overlay.parentElement !== document.body) document.body.appendChild(overlay);
         overlay.style.display = 'flex';
         document.body.classList.add('themator-fullscreen');
+        pushHistory();
         render();
+        updateResponsiveButtons();
     });
 
     closeBtn.addEventListener('click', () => {
@@ -50,6 +72,61 @@ document.addEventListener('DOMContentLoaded', () => {
         fabMainToggle.addEventListener('click', () => {
             const isActive = fabMenu.classList.toggle('active');
             fabMainToggle.textContent = isActive ? '✕' : '⋯';
+        });
+    }
+
+    // ── Responsive preview ────────────────────────────────────────────────────
+    const previewSizes = { desktop: '100%', tablet: '768px', mobile: '375px' };
+    let currentPreview = 'desktop';
+
+    // Inject responsive buttons into the builder header (after the title)
+    const builderHeader = overlay ? overlay.querySelector('.tm-builder-header, #tm-header') : null;
+    const respBar = document.createElement('div');
+    respBar.id = 'tm-resp-bar';
+    respBar.style.cssText = 'display:flex;gap:2px;align-items:center;';
+    ['desktop','tablet','mobile'].forEach(mode => {
+        const icons = { desktop: '🖥', tablet: '📱', mobile: '📱' };
+        const labels = { desktop: 'Desktop', tablet: 'Tablet', mobile: 'Mobile' };
+        const iconsReal = { desktop: '🖥️', tablet: '📟', mobile: '📱' };
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.resp = mode;
+        btn.title = labels[mode];
+        btn.textContent = iconsReal[mode];
+        btn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:4px 8px;cursor:pointer;font-size:14px;transition:background .15s;';
+        btn.addEventListener('click', () => setResponsiveMode(mode));
+        respBar.appendChild(btn);
+    });
+    // Also add undo/redo buttons
+    const undoBtn = document.createElement('button');
+    undoBtn.type = 'button'; undoBtn.title = 'Annuler (Ctrl+Z)'; undoBtn.textContent = '↩'; 
+    undoBtn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:4px 8px;cursor:pointer;font-size:14px;margin-left:8px;';
+    undoBtn.onclick = undo;
+    const redoBtn = document.createElement('button');
+    redoBtn.type = 'button'; redoBtn.title = 'Rétablir (Ctrl+Y)'; redoBtn.textContent = '↪';
+    redoBtn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:4px 8px;cursor:pointer;font-size:14px;';
+    redoBtn.onclick = redo;
+    respBar.appendChild(undoBtn);
+    respBar.appendChild(redoBtn);
+
+    if (builderHeader) {
+        const saveArea = builderHeader.querySelector('#tm-apply-builder, button');
+        builderHeader.insertBefore(respBar, saveArea || builderHeader.firstChild);
+    } else {
+        // Append after builder title element if header not found
+        const topBar = overlay ? overlay.querySelector('.tm-top-bar, .tm-header') : null;
+        if (topBar) topBar.appendChild(respBar);
+    }
+
+    function setResponsiveMode(mode) {
+        currentPreview = mode;
+        canvas.style.maxWidth = previewSizes[mode];
+        canvas.style.margin = '0 auto';
+        updateResponsiveButtons();
+    }
+    function updateResponsiveButtons() {
+        respBar.querySelectorAll('button[data-resp]').forEach(b => {
+            b.style.background = b.dataset.resp === currentPreview ? 'rgba(255,255,255,0.2)' : 'transparent';
         });
     }
 
@@ -244,11 +321,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyStyles(el, node) {
+        // Background
         if (node.bgColor && node.bgColor !== '#ffffff') el.style.backgroundColor = node.bgColor;
-        if (node.bgImage) el.style.backgroundImage = `url(${node.bgImage})`;
-        if (node.bgImage) el.style.backgroundSize = 'cover';
-        if (node.bgImage) el.style.backgroundPosition = 'center';
-        if (node.padding) el.style.padding = node.padding;
+        if (node.bgImage) { el.style.backgroundImage = `url(${node.bgImage})`; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
+        // Spacing (shorthand or per-side)
+        if (node.paddingTop || node.paddingRight || node.paddingBottom || node.paddingLeft) {
+            el.style.paddingTop    = node.paddingTop    || '0';
+            el.style.paddingRight  = node.paddingRight  || '0';
+            el.style.paddingBottom = node.paddingBottom || '0';
+            el.style.paddingLeft   = node.paddingLeft   || '0';
+        } else if (node.padding) { el.style.padding = node.padding; }
+        if (node.marginTop || node.marginRight || node.marginBottom || node.marginLeft) {
+            el.style.marginTop    = node.marginTop    || '0';
+            el.style.marginRight  = node.marginRight  || 'auto';
+            el.style.marginBottom = node.marginBottom || '0';
+            el.style.marginLeft   = node.marginLeft   || 'auto';
+        }
+        // Border
+        if (node.borderWidth) {
+            el.style.borderStyle = node.borderStyle || 'solid';
+            el.style.borderWidth = node.borderWidth;
+            el.style.borderColor = node.borderColor || '#000000';
+        }
+        if (node.borderRadius) el.style.borderRadius = node.borderRadius;
+        // Box shadow
+        if (node.boxShadow) el.style.boxShadow = node.boxShadow;
+        // Opacity
+        if (node.opacity && node.opacity !== '1') el.style.opacity = node.opacity;
     }
 
     // ── Events ────────────────────────────────────────────────────────────────
@@ -256,11 +355,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = e.target.closest('[class*="tm-action-"]');
         if (!btn) return;
         const d = btn.dataset;
-        if      (btn.classList.contains('tm-action-settings')) openSettings(d.type, d.id, d.parent || null);
-        else if (btn.classList.contains('tm-action-clone'))    cloneNode(d.type, d.id, d.parent || null);
-        else if (btn.classList.contains('tm-action-delete'))   deleteNode(d.type, d.id, d.parent || null);
-        else if (btn.classList.contains('tm-action-up'))       moveSection(d.id, -1);
-        else if (btn.classList.contains('tm-action-down'))     moveSection(d.id, +1);
+        if      (btn.classList.contains('tm-action-settings'))    { openSettings(d.type, d.id, d.parent || null); }
+        else if (btn.classList.contains('tm-action-clone'))        { cloneNode(d.type, d.id, d.parent || null); pushHistory(); }
+        else if (btn.classList.contains('tm-action-delete'))       { deleteNode(d.type, d.id, d.parent || null); pushHistory(); }
+        else if (btn.classList.contains('tm-action-up'))           { moveSection(d.id, -1); pushHistory(); }
+        else if (btn.classList.contains('tm-action-down'))         { moveSection(d.id, +1); pushHistory(); }
+        else if (btn.classList.contains('tm-action-copy-style'))   { copyStyle(d.type, d.id, d.parent || null); }
+        else if (btn.classList.contains('tm-action-paste-style'))  { pasteStyle(d.type, d.id, d.parent || null); }
     });
 
     // ── Column picker ─────────────────────────────────────────────────────────
@@ -357,6 +458,29 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(picker);
     }
 
+    // ── Copy/Paste styles ────────────────────────────────────────────────────
+    const styleKeys = ['bgColor','bgImage','padding','paddingTop','paddingRight','paddingBottom','paddingLeft',
+        'marginTop','marginRight','marginBottom','marginLeft','borderWidth','borderStyle','borderColor',
+        'borderRadius','boxShadow','opacity','txtColor','fontSize','fontFamily','fontWeight',
+        'lineHeight','letterSpacing'];
+    function copyStyle(type, id, parentId) {
+        const node = findNode(type, id, parentId);
+        if (!node) return;
+        copiedStyles = {};
+        styleKeys.forEach(k => { if (node[k] !== undefined) copiedStyles[k] = node[k]; });
+        // Brief flash
+        const el = canvas.querySelector(`[data-id="${id}"]`);
+        if (el) { el.style.outline = '2px solid #8f43ee'; setTimeout(() => el.style.outline = '', 700); }
+    }
+    function pasteStyle(type, id, parentId) {
+        if (!copiedStyles) return;
+        const node = findNode(type, id, parentId);
+        if (!node) return;
+        Object.assign(node, copiedStyles);
+        pushHistory();
+        render();
+    }
+
     // ── Add / Clone / Delete ──────────────────────────────────────────────────
     function addSection() {
         state.sections.push({
@@ -365,6 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
             padding: '60px 20px',
             rows: []
         });
+        pushHistory();
         render();
     }
 
@@ -569,19 +694,60 @@ document.addEventListener('DOMContentLoaded', () => {
         return wrap;
     }
 
+    // ── Helper: section header ─────────────────────────────────────────────────
+    function sectionHeader(label) {
+        const h = document.createElement('div');
+        h.style.cssText = 'font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8f43ee;margin:18px 0 10px;padding-bottom:4px;border-bottom:1px solid #f0eeff;';
+        h.textContent = label;
+        return h;
+    }
+
+    // ── Helper: spacing row (4 inputs: top/right/bottom/left) ─────────────────
+    function spacingGroup(label, prefix, node) {
+        const wrap = document.createElement('div');
+        wrap.style.marginBottom = '16px';
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#888;margin-bottom:8px;';
+        lbl.textContent = label;
+        wrap.appendChild(lbl);
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;';
+        ['Top','Right','Bottom','Left'].forEach(side => {
+            const col = document.createElement('div');
+            const sideLbl = document.createElement('div');
+            sideLbl.style.cssText = 'font-size:10px;color:#aaa;text-align:center;margin-bottom:3px;';
+            sideLbl.textContent = side;
+            const inp = document.createElement('input');
+            inp.type = 'text';
+            inp.placeholder = '0';
+            inp.style.cssText = 'width:100%;padding:6px 4px;text-align:center;border:1px solid #d5d9dd;border-radius:3px;font-size:12px;box-sizing:border-box;';
+            const key = prefix + side.toLowerCase().replace('bottom','Bottom').replace('right','Right').replace('left','Left');
+            const realKey = prefix.toLowerCase() + side;
+            const storeKey = prefix + side;
+            inp.value = node[storeKey] || '';
+            inp.addEventListener('input', () => { node[storeKey] = inp.value; });
+            col.appendChild(sideLbl); col.appendChild(inp);
+            grid.appendChild(col);
+        });
+        wrap.appendChild(grid);
+        return wrap;
+    }
+
     function renderModalBody(node, type, tabIdx) {
         modalBody.innerHTML = '';
         const isContent = tabIdx === 0;
+        const isDesign  = tabIdx === 1;
+        const isAdvanced = tabIdx === 2;
 
         if (isContent) {
-            // Content tab
+            // ── Content tab ──────────────────────────────────────────────────
             if (type === 'section') {
                 modalBody.appendChild(field('Couleur de fond', 'bgColor', node, 'color'));
                 modalBody.appendChild(field('Image de fond (URL)', 'bgImage', node, 'image-picker'));
-                modalBody.appendChild(field('Padding', 'padding', node, 'text', { default: '60px 20px', placeholder: 'ex: 60px 20px' }));
+                modalBody.appendChild(field('Padding global', 'padding', node, 'text', { default: '60px 20px', placeholder: 'ex: 60px 20px' }));
             } else if (type === 'row') {
                 modalBody.appendChild(field('Couleur de fond', 'bgColor', node, 'color'));
-                modalBody.appendChild(field('Padding', 'padding', node, 'text', { placeholder: 'ex: 20px 0' }));
+                modalBody.appendChild(field('Padding global', 'padding', node, 'text', { placeholder: 'ex: 20px 0' }));
             } else if (type === 'module') {
                 if (node.type === 'image') {
                     modalBody.appendChild(field('Image', 'src', node, 'image-picker'));
@@ -593,31 +759,126 @@ document.addEventListener('DOMContentLoaded', () => {
                     modalBody.appendChild(field('Couleur fond', 'btnBg', node, 'color'));
                     modalBody.appendChild(field('Couleur texte', 'btnColor', node, 'color'));
                     modalBody.appendChild(field('Alignement', 'align', node, 'select', { options: [['left','Gauche'],['center','Centre'],['right','Droite']] }));
+                    modalBody.appendChild(field('Ouvrir dans', 'target', node, 'select', { options: [['_self','Même onglet'],['_blank','Nouvel onglet']] }));
                 } else if (node.type === 'title') {
-                    modalBody.appendChild(field('Niveau HTML', 'level', node, 'select', { options: [['h1','H1'],['h2','H2'],['h3','H3'],['h4','H4']] }));
+                    modalBody.appendChild(field('Niveau HTML', 'level', node, 'select', { options: [['h1','H1 — Titre principal'],['h2','H2'],['h3','H3'],['h4','H4']] }));
                     modalBody.appendChild(field('Alignement', 'align', node, 'select', { options: [['left','Gauche'],['center','Centre'],['right','Droite']] }));
                 } else {
-                    // text
                     modalBody.appendChild(field('Contenu HTML', 'content', node, 'textarea'));
                     modalBody.appendChild(field('Alignement', 'align', node, 'select', { options: [['left','Gauche'],['center','Centre'],['right','Droite']] }));
                 }
             }
-        } else {
-            // Style tab
-            if (type === 'module') {
-                if (node.type !== 'image' && node.type !== 'button') {
-                    modalBody.appendChild(field('Couleur du texte', 'txtColor', node, 'color'));
-                    modalBody.appendChild(field('Taille de police', 'fontSize', node, 'text', { default: '16px', placeholder: 'ex: 16px' }));
-                }
-                modalBody.appendChild(field('Couleur de fond', 'bgColor', node, 'color'));
-                modalBody.appendChild(field('Padding', 'padding', node, 'text', { placeholder: 'ex: 15px' }));
-                if (node.type === 'image') {
-                    modalBody.appendChild(field('Style img (CSS)', 'imgStyle', node, 'text', { placeholder: 'ex: border-radius:8px;' }));
-                    modalBody.appendChild(field('Largeur du module', 'width', node, 'select', { options: [['','Auto'],['100%','100%'],['50%','50%'],['33.33%','1/3'],['66.66%','2/3'],['25%','25%']] }));
-                }
-            } else if (type === 'section') {
-                modalBody.appendChild(field('Couleur superposition', 'bgColor', node, 'color'));
+        } else if (isDesign) {
+            // ── Design tab (NEW) ─────────────────────────────────────────────
+
+            // ▸ Background
+            modalBody.appendChild(sectionHeader('🎨 Arrière-plan'));
+            modalBody.appendChild(field('Couleur de fond', 'bgColor', node, 'color'));
+            if (type !== 'module' || node.type === 'image') {
+                // nothing extra
             }
+            if (type === 'section') {
+                modalBody.appendChild(field('Image de fond', 'bgImage', node, 'image-picker'));
+            }
+
+            // ▸ Typography (not for image modules)
+            if (type === 'module' && node.type !== 'image') {
+                modalBody.appendChild(sectionHeader('🔤 Typographie'));
+                modalBody.appendChild(field('Famille de police', 'fontFamily', node, 'select', {
+                    options: [
+                        ['','Hérité'],['Arial, sans-serif','Arial'],['Georgia, serif','Georgia'],
+                        ["'Times New Roman', serif",'Times New Roman'],["'Open Sans', sans-serif",'Open Sans'],
+                        ["'Roboto', sans-serif",'Roboto'],["'Lato', sans-serif",'Lato'],
+                        ["'Montserrat', sans-serif",'Montserrat'],["'Playfair Display', serif",'Playfair Display'],
+                        ["'Raleway', sans-serif",'Raleway'],
+                    ]
+                }));
+                modalBody.appendChild(field('Taille de police', 'fontSize', node, 'text', { placeholder: 'ex: 16px ou 1.2rem' }));
+                modalBody.appendChild(field('Graisse', 'fontWeight', node, 'select', {
+                    options: [['','Normal'],['300','Light (300)'],['400','Regular (400)'],['500','Medium (500)'],['600','Semi-bold (600)'],['700','Bold (700)'],['800','Extra-bold (800)'],['900','Black (900)']]
+                }));
+                modalBody.appendChild(field('Style', 'fontStyle', node, 'select', { options: [['','Normal'],['italic','Italique']] }));
+                modalBody.appendChild(field('Hauteur de ligne', 'lineHeight', node, 'text', { placeholder: 'ex: 1.5 ou 24px' }));
+                modalBody.appendChild(field('Espacement lettres', 'letterSpacing', node, 'text', { placeholder: 'ex: 0.05em' }));
+                modalBody.appendChild(field('Transformation', 'textTransform', node, 'select', { options: [['','Aucune'],['uppercase','MAJUSCULES'],['lowercase','minuscules'],['capitalize','Capitalize']] }));
+                if (node.type !== 'button') {
+                    modalBody.appendChild(field('Couleur du texte', 'txtColor', node, 'color'));
+                }
+            }
+
+            // ▸ Spacing
+            modalBody.appendChild(sectionHeader('📐 Espacement'));
+            modalBody.appendChild(spacingGroup('Padding', 'padding', node));
+            modalBody.appendChild(spacingGroup('Margin', 'margin', node));
+
+            // ▸ Border
+            modalBody.appendChild(sectionHeader('▭ Bordure'));
+            modalBody.appendChild(field('Épaisseur', 'borderWidth', node, 'text', { placeholder: 'ex: 1px ou 0 0 2px 0' }));
+            modalBody.appendChild(field('Style', 'borderStyle', node, 'select', { options: [['none','Aucune'],['solid','Solide'],['dashed','Pointillés'],['dotted','Points'],['double','Double']] }));
+            modalBody.appendChild(field('Couleur', 'borderColor', node, 'color'));
+            modalBody.appendChild(field('Rayon (arrondi)', 'borderRadius', node, 'text', { placeholder: 'ex: 8px ou 50%' }));
+
+            // ▸ Shadow
+            modalBody.appendChild(sectionHeader('💫 Ombre'));
+            // Box shadow presets
+            const shadowPresets = document.createElement('div');
+            shadowPresets.style.cssText = 'display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;';
+            [
+                { label: 'Aucune',    value: '' },
+                { label: 'Légère',    value: '0 2px 8px rgba(0,0,0,0.08)' },
+                { label: 'Moyenne',   value: '0 4px 20px rgba(0,0,0,0.15)' },
+                { label: 'Forte',     value: '0 8px 40px rgba(0,0,0,0.25)' },
+                { label: 'Colorée',   value: '0 4px 20px rgba(143,67,238,0.3)' },
+            ].forEach(preset => {
+                const pb = document.createElement('button');
+                pb.type = 'button';
+                pb.textContent = preset.label;
+                pb.style.cssText = 'padding:5px 10px;font-size:11px;border:1px solid #e0e0e0;border-radius:3px;cursor:pointer;background:#f9f9f9;';
+                pb.onclick = () => { node.boxShadow = preset.value; shadowInp.value = preset.value; };
+                shadowPresets.appendChild(pb);
+            });
+            modalBody.appendChild(shadowPresets);
+            const shadowInp = document.createElement('input');
+            shadowInp.type = 'text';
+            shadowInp.placeholder = 'ex: 0 4px 20px rgba(0,0,0,0.15)';
+            shadowInp.style.cssText = 'width:100%;padding:8px;border:1px solid #d5d9dd;border-radius:3px;font-size:13px;box-sizing:border-box;';
+            shadowInp.value = node.boxShadow || '';
+            shadowInp.addEventListener('input', () => { node.boxShadow = shadowInp.value; });
+            modalBody.appendChild(shadowInp);
+
+            // ▸ Filters
+            modalBody.appendChild(sectionHeader('🔆 Filtres'));
+            modalBody.appendChild(field('Opacité (0–1)', 'opacity', node, 'text', { placeholder: 'ex: 0.8', default: '1' }));
+            if (type === 'module' && node.type === 'image') {
+                modalBody.appendChild(field('Filtre CSS', 'imgStyle', node, 'text', { placeholder: 'ex: grayscale(100%) brightness(1.2)' }));
+            }
+
+        } else if (isAdvanced) {
+            // ── Advanced tab ─────────────────────────────────────────────────
+            modalBody.appendChild(sectionHeader('🔧 CSS Personnalisé'));
+            modalBody.appendChild(field('ID CSS', 'cssId', node, 'text', { placeholder: 'mon-element' }));
+            modalBody.appendChild(field('Classes CSS', 'cssClass', node, 'text', { placeholder: 'ma-classe autre-classe' }));
+            modalBody.appendChild(field('CSS personnalisé (Main Element)', 'customCss', node, 'textarea'));
+
+            modalBody.appendChild(sectionHeader('👁️ Visibilité'));
+            modalBody.appendChild(field('Masquer sur Desktop', 'hideDesktop', node, 'select', { options: [['','Non'],['1','Oui']] }));
+            modalBody.appendChild(field('Masquer sur Tablette', 'hideTablet', node, 'select', { options: [['','Non'],['1','Oui']] }));
+            modalBody.appendChild(field('Masquer sur Mobile', 'hideMobile', node, 'select', { options: [['','Non'],['1','Oui']] }));
+
+            // Copy/Paste styles buttons
+            modalBody.appendChild(sectionHeader('📋 Copier / Coller'));
+            const cpRow = document.createElement('div');
+            cpRow.style.cssText = 'display:flex;gap:8px;';
+            const copyBtn2 = document.createElement('button');
+            copyBtn2.type = 'button'; copyBtn2.textContent = '📋 Copier les styles'; 
+            copyBtn2.style.cssText = 'padding:8px 14px;background:#f0f0f1;border:1px solid #ccc;border-radius:3px;cursor:pointer;font-size:12px;';
+            copyBtn2.onclick = () => { const n = currentEditingNode; copyStyle(n.type, n.id, n.parentId); copyBtn2.textContent = '✅ Copié !'; setTimeout(() => copyBtn2.textContent = '📋 Copier les styles', 1500); };
+            const pasteBtn2 = document.createElement('button');
+            pasteBtn2.type = 'button'; pasteBtn2.textContent = '📌 Coller les styles';
+            pasteBtn2.style.cssText = 'padding:8px 14px;background:#f0eeff;border:1px solid #8f43ee;border-radius:3px;cursor:pointer;font-size:12px;color:#8f43ee;font-weight:600;';
+            pasteBtn2.onclick = () => { const n = currentEditingNode; pasteStyle(n.type, n.id, n.parentId); modal.style.display='none'; };
+            cpRow.appendChild(copyBtn2); cpRow.appendChild(pasteBtn2);
+            modalBody.appendChild(cpRow);
         }
     }
 
@@ -645,27 +906,69 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ── Helpers: build CSS strings from node ──────────────────────────────────
+    function nodeToInlineCSS(node) {
+        let css = '';
+        if (node.bgColor && node.bgColor !== '#ffffff') css += `background-color:${node.bgColor};`;
+        if (node.bgImage) css += `background-image:url(${node.bgImage});background-size:cover;background-position:center;`;
+        if (node.paddingTop || node.paddingRight || node.paddingBottom || node.paddingLeft) {
+            css += `padding:${node.paddingTop||'0'} ${node.paddingRight||'0'} ${node.paddingBottom||'0'} ${node.paddingLeft||'0'};`;
+        } else if (node.padding) { css += `padding:${node.padding};`; }
+        if (node.marginTop || node.marginRight || node.marginBottom || node.marginLeft) {
+            css += `margin:${node.marginTop||'0'} ${node.marginRight||'auto'} ${node.marginBottom||'0'} ${node.marginLeft||'auto'};`;
+        }
+        if (node.borderWidth && node.borderStyle && node.borderStyle !== 'none') {
+            css += `border:${node.borderWidth} ${node.borderStyle} ${node.borderColor||'#000'};`;
+        }
+        if (node.borderRadius) css += `border-radius:${node.borderRadius};`;
+        if (node.boxShadow) css += `box-shadow:${node.boxShadow};`;
+        if (node.opacity && node.opacity !== '1') css += `opacity:${node.opacity};`;
+        if (node.fontFamily)    css += `font-family:${node.fontFamily};`;
+        if (node.fontSize)      css += `font-size:${node.fontSize};`;
+        if (node.fontWeight)    css += `font-weight:${node.fontWeight};`;
+        if (node.fontStyle)     css += `font-style:${node.fontStyle};`;
+        if (node.lineHeight)    css += `line-height:${node.lineHeight};`;
+        if (node.letterSpacing) css += `letter-spacing:${node.letterSpacing};`;
+        if (node.textTransform) css += `text-transform:${node.textTransform};`;
+        if (node.txtColor)      css += `color:${node.txtColor};`;
+        if (node.align)         css += `text-align:${node.align};`;
+        if (node.customCss)     css += node.customCss;
+        return css;
+    }
+
     // ── Frontend HTML generation ──────────────────────────────────────────────
     function generateFrontendHTML(data) {
         let html = '<div class="themator-frontend-wrapper">';
         (data.sections || []).forEach(sec => {
-            const bgImg = sec.bgImage ? `background-image:url(${sec.bgImage});background-size:cover;background-position:center;` : '';
-            html += `<section class="tm-front-section" style="background-color:${sec.bgColor || '#fff'};${bgImg}padding:${sec.padding || '60px 20px'};">`;
+            const secCss = nodeToInlineCSS(sec) || 'background-color:#fff;padding:60px 20px;';
+            const secId  = sec.cssId   ? ` id="${sec.cssId}"` : '';
+            const secCls = sec.cssClass ? ` ${sec.cssClass}` : '';
+            html += `<section class="tm-front-section${secCls}"${secId} style="${secCss}">`;
             (sec.rows || []).forEach(row => {
-                html += `<div class="tm-front-row" style="display:flex;flex-wrap:wrap;max-width:1080px;margin:0 auto;">`;
+                const rowCss = nodeToInlineCSS(row);
+                const rowId  = row.cssId   ? ` id="${row.cssId}"` : '';
+                const rowCls = row.cssClass ? ` ${row.cssClass}` : '';
+                html += `<div class="tm-front-row${rowCls}"${rowId} style="display:flex;flex-wrap:wrap;max-width:1080px;margin:0 auto;${rowCss}">`;
                 (row.modules || []).forEach(mod => {
-                    const w = mod.width ? `flex:0 0 ${mod.width};` : 'flex:1;';
-                    html += `<div class="tm-front-module" style="${w}padding:${mod.padding||'15px'};box-sizing:border-box;">`;
+                    const w      = mod.width  ? `flex:0 0 ${mod.width};` : 'flex:1;';
+                    const modCss = nodeToInlineCSS(mod);
+                    const modId  = mod.cssId   ? ` id="${mod.cssId}"` : '';
+                    const modCls = mod.cssClass ? ` ${mod.cssClass}` : '';
+                    const respCls = [
+                        mod.hideDesktop ? 'tm-hide-desktop' : '',
+                        mod.hideTablet  ? 'tm-hide-tablet'  : '',
+                        mod.hideMobile  ? 'tm-hide-mobile'  : '',
+                    ].filter(Boolean).join(' ');
+                    html += `<div class="tm-front-module${modCls ? ' '+modCls : ''}${respCls ? ' '+respCls : ''}"${modId} style="${w}box-sizing:border-box;${modCss}">`;
                     if (mod.type === 'image' && mod.src) {
                         html += `<img src="${mod.src}" alt="${mod.alt||''}" style="max-width:100%;height:auto;${mod.imgStyle||''}">`;
                         if (mod.caption) html += `<p style="text-align:center;font-size:13px;color:#888;">${mod.caption}</p>`;
                     } else if (mod.type === 'button') {
-                        html += `<div style="text-align:${mod.align||'center'};"><a href="${mod.url||'#'}" style="display:inline-block;background:${mod.btnBg||'#8f43ee'};color:${mod.btnColor||'#fff'};padding:12px 28px;border-radius:4px;font-weight:700;text-decoration:none;">${mod.content||'Cliquez ici'}</a></div>`;
+                        const tgt = mod.target ? ` target="${mod.target}"` : '';
+                        const btnRadius = mod.borderRadius ? `border-radius:${mod.borderRadius};` : 'border-radius:4px;';
+                        html += `<div style="text-align:${mod.align||'center'};"><a href="${mod.url||'#'}"${tgt} style="display:inline-block;background:${mod.btnBg||'#8f43ee'};color:${mod.btnColor||'#fff'};padding:12px 28px;${btnRadius}font-weight:700;text-decoration:none;font-size:${mod.fontSize||'15px'};">${mod.content||'Cliquez ici'}</a></div>`;
                     } else {
-                        const color = mod.txtColor ? `color:${mod.txtColor};` : '';
-                        const size  = mod.fontSize  ? `font-size:${mod.fontSize};` : '';
-                        const align = mod.align     ? `text-align:${mod.align};` : '';
-                        html += `<div style="${color}${size}${align}">${mod.content||''}</div>`;
+                        html += `<div>${mod.content||''}</div>`;
                     }
                     html += '</div>';
                 });
