@@ -154,6 +154,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ── Hover delay helper: keeps pill visible for 250ms after mouseleave ─────────
+    function addHoverDelay(el, pill) {
+        let leaveTimer = null;
+        const cancel = () => { if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; } };
+        el.addEventListener('mouseenter', () => { cancel(); });
+        el.addEventListener('mouseleave', () => {
+            cancel();
+            leaveTimer = setTimeout(() => { /* CSS handles visibility - no action needed */ }, 250);
+        });
+        if (pill) {
+            pill.addEventListener('mouseenter', cancel);
+            pill.addEventListener('mouseleave', () => {
+                cancel();
+                // Force a re-check: if mouse left both el and pill, hide naturally via CSS
+            });
+        }
+    }
+
     // ── Section ───────────────────────────────────────────────────────────────
     function createSectionElement(section) {
         const el = document.createElement('section');
@@ -174,6 +192,15 @@ document.addEventListener('DOMContentLoaded', () => {
         addRowBtn.textContent = '+';
         addRowBtn.onclick = (e) => { e.stopPropagation(); showColumnPicker(section.id); };
         el.appendChild(addRowBtn);
+
+        // Belt-and-suspenders: keep section active while hovering add-row btn or pill
+        [addRowBtn, el.querySelector('.section-pill')].forEach(child => {
+            if (!child) return;
+            child.addEventListener('mouseenter', () => el.classList.add('tm-force-hover'));
+            child.addEventListener('mouseleave', (e) => {
+                if (!el.contains(e.relatedTarget)) el.classList.remove('tm-force-hover');
+            });
+        });
 
         return el;
     }
@@ -199,6 +226,15 @@ document.addEventListener('DOMContentLoaded', () => {
         addModBtn.textContent = '+';
         addModBtn.onclick = (e) => { e.stopPropagation(); showModulePicker(row.id); };
         el.appendChild(addModBtn);
+
+        // Keep row active while hovering add-module btn or row-pill
+        [addModBtn, el.querySelector('.row-pill')].forEach(child => {
+            if (!child) return;
+            child.addEventListener('mouseenter', () => el.classList.add('tm-force-hover'));
+            child.addEventListener('mouseleave', (e) => {
+                if (!el.contains(e.relatedTarget)) el.classList.remove('tm-force-hover');
+            });
+        });
 
         return el;
     }

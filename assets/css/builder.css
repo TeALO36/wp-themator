@@ -183,6 +183,27 @@ body.themator-fullscreen #wpbody-content {
   position: relative;
   padding: 50px 20px;
   transition: outline 0.15s;
+  cursor: default;           /* Bug 1: prevent cursor becoming invisible text cursor */
+  /* Bug 2: extend hover zone upward to include the pill controls */
+  margin-top: 0;
+}
+
+/*
+  Bug 2 fix: use a ::before pseudo-element as an invisible "bridge" above the element.
+  This keeps hover active even when the mouse moves from the element toward the pill above.
+*/
+.tm-section::before,
+.tm-row::before,
+.tm-module::before {
+  content: '';
+  position: absolute;
+  top: -36px;       /* extends 36px above (covers the pill height + small gap) */
+  left: 0;
+  right: 0;
+  height: 36px;
+  background: transparent;
+  z-index: 0;       /* below the pill (z-index:200) */
+  pointer-events: all;
 }
 
 .tm-section:hover {
@@ -261,6 +282,7 @@ body.themator-fullscreen #wpbody-content {
   gap: 0;
   transition: outline 0.15s;
   min-height: 80px;
+  cursor: default;  /* Bug 1 */
 }
 
 .tm-row:hover {
@@ -278,6 +300,16 @@ body.themator-fullscreen #wpbody-content {
   padding: 15px;
   transition: outline 0.15s;
   min-height: 60px;
+  cursor: default;  /* Bug 1 */
+}
+
+/* Bug 1: only editable content areas should show text cursor */
+.tm-module .tm-module-content[contenteditable="true"] {
+  cursor: text;
+}
+/* Non-editable modules keep default cursor */
+.tm-module .tm-module-content[contenteditable="false"] {
+  cursor: default;
 }
 
 .tm-module:hover {
@@ -300,7 +332,8 @@ body.themator-fullscreen #wpbody-content {
   transform: translateY(4px);
 }
 
-.tm-section:hover > .tm-controls-pill.section-pill {
+.tm-section:hover > .tm-controls-pill.section-pill,
+.tm-section:focus-within > .tm-controls-pill.section-pill {
   opacity: 1;
   pointer-events: all;
   transform: translateY(0);
@@ -308,7 +341,8 @@ body.themator-fullscreen #wpbody-content {
   left: 0;
 }
 
-.tm-row:hover > .tm-controls-pill.row-pill {
+.tm-row:hover > .tm-controls-pill.row-pill,
+.tm-row:focus-within > .tm-controls-pill.row-pill {
   opacity: 1;
   pointer-events: all;
   transform: translateY(0);
@@ -316,7 +350,37 @@ body.themator-fullscreen #wpbody-content {
   left: 0;
 }
 
-.tm-module:hover > .tm-controls-pill.module-pill {
+.tm-module:hover > .tm-controls-pill.module-pill,
+.tm-module:focus-within > .tm-controls-pill.module-pill {
+  opacity: 1;
+  pointer-events: all;
+  transform: translate(-50%, 0);
+  top: -34px;
+  left: 50%;
+}
+
+/* Keep controls visible when hovering the pill itself */
+.tm-controls-pill:hover {
+  opacity: 1 !important;
+  pointer-events: all !important;
+}
+
+/* JS adds .tm-force-hover on parent when mouse enters pill/child-btn */
+.tm-section.tm-force-hover > .tm-controls-pill.section-pill {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+  top: -34px;
+  left: 0;
+}
+.tm-row.tm-force-hover > .tm-controls-pill.row-pill {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+  top: -34px;
+  left: 0;
+}
+.tm-module.tm-force-hover > .tm-controls-pill.module-pill {
   opacity: 1;
   pointer-events: all;
   transform: translate(-50%, 0);
