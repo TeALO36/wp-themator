@@ -1,6 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ── Detect mode ───────────────────────────────────────────────────────────
+    // standalone: loaded from builder-page.php (tmatorFullscreen = true)
+    // overlay:    loaded from the meta box inside post.php
+    const isStandalone = (typeof tmatorFullscreen !== 'undefined' && tmatorFullscreen === true);
     const launchBtn = document.getElementById('launch-themator-builder');
-    if (!launchBtn) return;
+
+    // In overlay mode we need the launch button; in standalone we don't.
+    if (!isStandalone && !launchBtn) return;
 
     // ── DOM refs ──────────────────────────────────────────────────────────────
     const overlay       = document.getElementById('themator-builder-overlay');
@@ -26,8 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentEditingNode = null;
 
     try {
-        const raw = (typeof thematorData !== 'undefined') ? thematorData.saved_data : '';
-        if (raw && raw.trim() !== '') state = JSON.parse(raw);
+        if (isStandalone && typeof tmatorConfig !== 'undefined' && tmatorConfig.savedState) {
+            state = (typeof tmatorConfig.savedState === 'string')
+                ? JSON.parse(tmatorConfig.savedState)
+                : tmatorConfig.savedState;
+        } else {
+            const raw = (typeof thematorData !== 'undefined') ? thematorData.saved_data : '';
+            if (raw && raw.trim() !== '') state = JSON.parse(raw);
+        }
     } catch(e) { console.warn('[Themator] parse error:', e); }
 
     const uid = () => 'tm' + Date.now() + Math.floor(Math.random() * 9999);
@@ -44,29 +56,39 @@ document.addEventListener('DOMContentLoaded', () => {
     function undo() { if (historyIdx > 0) { historyIdx--; state = JSON.parse(history[historyIdx]); render(); } }
     function redo() { if (historyIdx < history.length - 1) { historyIdx++; state = JSON.parse(history[historyIdx]); render(); } }
     document.addEventListener('keydown', (e) => {
-        if (!overlay || overlay.style.display === 'none') return;
+        if (!isStandalone && overlay && overlay.style.display === 'none') return;
         if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') { e.preventDefault(); undo(); }
         if ((e.ctrlKey || e.metaKey) && (e.shiftKey && e.key === 'z' || e.key === 'y')) { e.preventDefault(); redo(); }
     });
 
-    // ── Clipboard (copy/paste styles) ────────────────────────────────────────
+    // ── Clipboard (copy/paste styles) ─────────────────────────────────────────
     let copiedStyles = null;
 
     // ── Launch / Close ────────────────────────────────────────────────────────
-    launchBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (overlay.parentElement !== document.body) document.body.appendChild(overlay);
-        overlay.style.display = 'flex';
-        document.body.classList.add('themator-fullscreen');
+    if (isStandalone) {
+        // Standalone: builder is always visible, no overlay toggling needed
         pushHistory();
         render();
         updateResponsiveButtons();
-    });
+    } else {
+        // Overlay mode (legacy: inside the post editor)
+        launchBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (overlay.parentElement !== document.body) document.body.appendChild(overlay);
+            overlay.style.display = 'flex';
+            document.body.classList.add('themator-fullscreen');
+            pushHistory();
+            render();
+            updateResponsiveButtons();
+        });
 
-    closeBtn.addEventListener('click', () => {
-        overlay.style.display = 'none';
-        document.body.classList.remove('themator-fullscreen');
-    });
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                overlay.style.display = 'none';
+                document.body.classList.remove('themator-fullscreen');
+            });
+        }
+    }
 
     if (fabMainToggle) {
         fabMainToggle.addEventListener('click', () => {
@@ -106,14 +128,57 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Save ──────────────────────────────────────────────────────────────────
     applyBtn.addEventListener('click', () => {
         syncContentFromDOM();
-        dataInput.value = JSON.stringify(state);
-        htmlInput.value = generateFrontendHTML(state);
-        applyBtn.textContent = '✓ Sauvegardé';
-        setTimeout(() => {
-            applyBtn.textContent = 'Enregistrer';
-            overlay.style.display = 'none';
-            document.body.classList.remove('themator-fullscreen');
-        }, 1200);
+        const stateJson = JSON.stringify(state);
+        const frontendHtml = generateFrontendHTML(state);
+
+        if (isStandalone) {
+            // Standalone mode: save via AJAX to WordPress
+            const cfg = (typeof tmatorConfig !== 'undefined') ? tmatorConfig : {};
+            applyBtn.textContent = '⏳ Sauvegarde...';
+            applyBtn.disabled = true;
+            fetch(cfg.ajaxUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    action:   'themator_save',
+                    nonce:    cfg.nonce,
+                    post_id:  cfg.postId,
+                    state:    stateJson,
+                    html:     frontendHtml
+                })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    applyBtn.textContent = '✓ Sauvegardé !';
+                    applyBtn.style.background = '#00e263';
+                } else {
+                    applyBtn.textContent = '✕ Erreur';
+                    applyBtn.style.background = '#e74c3c';
+                }
+                applyBtn.disabled = false;
+                setTimeout(() => {
+                    applyBtn.textContent = 'Enregistrer';
+                    applyBtn.style.background = '';
+                }, 2000);
+            })
+            .catch(() => {
+                applyBtn.textContent = '✕ Erreur réseau';
+                applyBtn.disabled = false;
+                applyBtn.style.background = '#e74c3c';
+                setTimeout(() => { applyBtn.textContent = 'Enregistrer'; applyBtn.style.background = ''; }, 2000);
+            });
+        } else {
+            // Overlay mode: write to hidden form fields and close
+            if (dataInput) dataInput.value = stateJson;
+            if (htmlInput) htmlInput.value = frontendHtml;
+            applyBtn.textContent = '✓ Sauvegardé';
+            setTimeout(() => {
+                applyBtn.textContent = 'Enregistrer';
+                overlay.style.display = 'none';
+                document.body.classList.remove('themator-fullscreen');
+            }, 1200);
+        }
     });
 
     // ── Render ────────────────────────────────────────────────────────────────
