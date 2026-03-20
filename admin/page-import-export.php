@@ -50,25 +50,51 @@ if ( isset( $_POST['themator_import_nonce'] ) && wp_verify_nonce( $_POST['themat
             <p style="font-size:13px; color:#666; margin-bottom:16px;">
                 <?php esc_html_e( 'Importez un fichier JSON exporté depuis un autre site Themator.', 'themator' ); ?>
             </p>
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data" id="tmator-import-form">
                 <?php wp_nonce_field( 'themator_import', 'themator_import_nonce' ); ?>
-                <label class="tm-upload-zone" for="tmator_import_file">
+                <div class="tm-upload-zone" id="tmator-upload-zone">
                     <div style="font-size:36px;">📁</div>
                     <p><?php esc_html_e( 'Cliquez pour choisir un fichier JSON', 'themator' ); ?></p>
-                    <input type="file" id="tmator_import_file" name="tmator_import_file" accept=".json" style="display:none;">
-                    <span id="tmator-file-name" style="font-size:12px; color:#999; margin-top:8px;"><?php esc_html_e( 'Aucun fichier sélectionné', 'themator' ); ?></span>
-                </label>
-                <button type="submit" class="tm-btn tm-btn-success">
-                    ⬆️ <?php esc_html_e( 'Importer', 'themator' ); ?>
-                </button>
+                    <span id="tmator-file-name" style="font-size:12px; color:#999; margin-top:8px; display:block;"><?php esc_html_e( 'Aucun fichier sélectionné', 'themator' ); ?></span>
+                </div>
+                <input type="file" id="tmator_import_file" name="tmator_import_file" accept=".json" style="display:none;">
+                <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+                    <button type="submit" class="tm-btn tm-btn-success">
+                        ⬆️ <?php esc_html_e( 'Importer', 'themator' ); ?>
+                    </button>
+                    <span id="tmator-file-name-btn" style="font-size:12px;color:#888;"></span>
+                </div>
             </form>
         </div>
     </div>
 </div>
 
 <script>
-document.getElementById('tmator_import_file').addEventListener('change', function() {
-    var name = this.files[0] ? this.files[0].name : '<?php esc_html_e( 'Aucun fichier sélectionné', 'themator' ); ?>';
-    document.getElementById('tmator-file-name').textContent = name;
-});
+(function() {
+    var zone   = document.getElementById('tmator-upload-zone');
+    var input  = document.getElementById('tmator_import_file');
+    var label  = document.getElementById('tmator-file-name');
+    var label2 = document.getElementById('tmator-file-name-btn');
+    if (zone && input) {
+        zone.style.cursor = 'pointer';
+        zone.addEventListener('click', function() { input.click(); });
+        zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.style.borderColor='#8f43ee'; });
+        zone.addEventListener('dragleave', function()  { zone.style.borderColor=''; });
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            zone.style.borderColor='';
+            if (e.dataTransfer.files[0]) {
+                input.files = e.dataTransfer.files;
+                var n = e.dataTransfer.files[0].name;
+                if (label)  label.textContent  = n;
+                if (label2) label2.textContent = '📄 ' + n;
+            }
+        });
+        input.addEventListener('change', function() {
+            var n = this.files[0] ? this.files[0].name : '<?php esc_js( esc_html__( 'Aucun fichier sélectionné', 'themator' ) ); ?>';
+            if (label)  label.textContent  = n;
+            if (label2) label2.textContent = this.files[0] ? '📄 ' + n : '';
+        });
+    }
+})();
 </script>
