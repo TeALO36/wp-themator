@@ -15,6 +15,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Update Version in themator.php
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s/Version:     .*/Version:     $VERSION/" themator.php
+          sed -i "s/define( 'THEMATOR_VERSION', '.*' );/define( 'THEMATOR_VERSION', '$VERSION' );/" themator.php
+
       - name: Create Zip
         run: |
           mkdir themator
