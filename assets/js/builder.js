@@ -33,9 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
         if (isStandalone && typeof tmatorConfig !== 'undefined' && tmatorConfig.savedState) {
-            state = (typeof tmatorConfig.savedState === 'string')
-                ? JSON.parse(tmatorConfig.savedState)
-                : tmatorConfig.savedState;
+            // PHP passes savedState via json_encode($saved_state) which wraps the
+            // JSON data string in another layer of JSON encoding — so we always parse.
+            const raw = (typeof tmatorConfig.savedState === 'string')
+                ? tmatorConfig.savedState
+                : JSON.stringify(tmatorConfig.savedState);
+            state = JSON.parse(raw);
         } else {
             const raw = (typeof thematorData !== 'undefined') ? thematorData.saved_data : '';
             if (raw && raw.trim() !== '') state = JSON.parse(raw);

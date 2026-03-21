@@ -94,7 +94,7 @@ function themator_render_builder_page() {
                 <button type="button" id="tm-redo-btn" title="Rétablir (Ctrl+Y)" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:3px;padding:5px 10px;cursor:pointer;font-size:14px;">↪</button>
             </div>
             <div class="tm-topbar-actions">
-                <button type="button" class="tm-topbar-btn primary" id="tm-apply-builder">Enregistrer</button>
+                <button type="button" id="tm-apply-builder" style="background:#00c14d;color:#fff;border:none;padding:8px 22px;border-radius:5px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:0.3px;">Enregistrer</button>
             </div>
         </div>
 
@@ -135,12 +135,10 @@ function themator_render_builder_page() {
         ajaxUrl:    <?php echo json_encode( $ajax_url ); ?>,
         nonce:      <?php echo json_encode( $nonce ); ?>,
         postId:     <?php echo (int) $post_id; ?>,
-        savedState: <?php
-            $decoded = $saved_state ? json_decode( $saved_state, true ) : null;
-            echo ( $decoded !== null && json_last_error() === JSON_ERROR_NONE )
-                ? json_encode( $decoded )
-                : 'null';
-        ?>
+        // savedState is passed as a JSON-encoded PHP string so special chars
+        // (quotes, backslashes, etc.) inside the HTML are properly escaped.
+        // builder.js will JSON.parse() this string to get the actual object.
+        savedState: <?php echo json_encode( $saved_state ? $saved_state : null ); ?>
     };
     // Mode fullscreen standalone – pas besoin d'ouvrir un overlay
     var tmatorFullscreen = true;
