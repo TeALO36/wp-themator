@@ -3,7 +3,7 @@
  * Plugin Name: Themator
  * Plugin URI:  https://github.com/TeALO36/wp-themator
  * Description: Un constructeur de pages visuel premium avec mode plein écran et design fluide.
- * Version:     1.2.5
+ * Version:     1.2.6
  * Author:      Teano
  * Text Domain: themator
  */
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; 
 }
 
-define( 'THEMATOR_VERSION', '1.2.5' );
+define( 'THEMATOR_VERSION', '1.2.6' );
 define( 'THEMATOR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'THEMATOR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -115,9 +115,10 @@ function themator_meta_box_html( $post ) {
             </label>
         </p>
 
-        <!-- Hidden fields required for the WP save hook -->
-        <input type="hidden" id="themator_data_input" name="themator_data" value="<?php echo esc_attr( get_post_meta( $post->ID, '_themator_data', true ) ); ?>" />
-        <input type="hidden" id="themator_html_input" name="themator_html" value="" />
+        <!-- Hidden fields required for the WP save hook --
+             Using textarea (not input[value]) to avoid HTML-attribute quote corruption in JSON -->
+        <textarea id="themator_data_input" name="themator_data" style="display:none;"><?php echo esc_textarea( get_post_meta( $post->ID, '_themator_data', true ) ); ?></textarea>
+        <textarea id="themator_html_input" name="themator_html" style="display:none;"></textarea>
     </div>
     <?php
 }
