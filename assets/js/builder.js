@@ -139,39 +139,53 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isStandalone) {
             // Standalone mode: save via AJAX to WordPress
             const cfg = (typeof tmatorConfig !== 'undefined') ? tmatorConfig : {};
+            if (!cfg.ajaxUrl || !cfg.nonce || !cfg.postId) {
+                console.error('[Themator] tmatorConfig manquant:', cfg);
+                applyBtn.textContent = '✕ Config manquante';
+                setTimeout(() => { applyBtn.textContent = 'Enregistrer'; }, 2000);
+                return;
+            }
             applyBtn.textContent = '⏳ Sauvegarde...';
             applyBtn.disabled = true;
-            fetch(cfg.ajaxUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    action:   'themator_save',
-                    nonce:    cfg.nonce,
-                    post_id:  cfg.postId,
-                    state:    stateJson,
-                    html:     frontendHtml
-                })
+            const fd = new FormData();
+            fd.append('action',  'themator_save');
+            fd.append('nonce',   cfg.nonce);
+            fd.append('post_id', cfg.postId);
+            fd.append('state',   stateJson);
+            fd.append('html',    frontendHtml);
+            fetch(cfg.ajaxUrl, { method: 'POST', body: fd })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
             })
-            .then(r => r.json())
-            .then(d => {
+            .then(txt => {
+                let d;
+                try { d = JSON.parse(txt); } catch(e) {
+                    console.error('[Themator] Réponse non-JSON:', txt.substring(0, 300));
+                    throw new Error('Réponse invalide');
+                }
                 if (d.success) {
                     applyBtn.textContent = '✓ Sauvegardé !';
-                    applyBtn.style.background = '#00e263';
+                    applyBtn.style.background = '#00c14d';
+                    applyBtn.style.color = '#fff';
                 } else {
-                    applyBtn.textContent = '✕ Erreur';
+                    console.error('[Themator] Erreur save:', d);
+                    applyBtn.textContent = '✕ ' + (d.data || 'Erreur');
                     applyBtn.style.background = '#e74c3c';
                 }
                 applyBtn.disabled = false;
                 setTimeout(() => {
                     applyBtn.textContent = 'Enregistrer';
-                    applyBtn.style.background = '';
-                }, 2000);
+                    applyBtn.style.background = '#00c14d';
+                    applyBtn.style.color = '#fff';
+                }, 2500);
             })
-            .catch(() => {
+            .catch(err => {
+                console.error('[Themator] AJAX catch:', err);
                 applyBtn.textContent = '✕ Erreur réseau';
                 applyBtn.disabled = false;
                 applyBtn.style.background = '#e74c3c';
-                setTimeout(() => { applyBtn.textContent = 'Enregistrer'; applyBtn.style.background = ''; }, 2000);
+                setTimeout(() => { applyBtn.textContent = 'Enregistrer'; applyBtn.style.background = '#00c14d'; applyBtn.style.color = '#fff'; }, 2500);
             });
         } else {
             // Overlay mode: write to hidden form fields and close
