@@ -3,7 +3,7 @@
  * Plugin Name: Themator
  * Plugin URI:  https://github.com/TeALO36/wp-themator
  * Description: Un constructeur de pages visuel premium avec mode plein écran et design fluide.
- * Version:     1.2.3
+ * Version:     1.2.4
  * Author:      Teano
  * Text Domain: themator
  */
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; 
 }
 
-define( 'THEMATOR_VERSION', '1.2.3' );
+define( 'THEMATOR_VERSION', '1.2.4' );
 define( 'THEMATOR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'THEMATOR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -288,6 +288,10 @@ function themator_enqueue_admin_panel_assets( $hook ) {
     $themator_pages = array(
         'toplevel_page_themator',
         'themator_page_themator-options',
+        'themator_page_themator-navigation',
+        'themator_page_themator-layout',
+        'themator_page_themator-seo',
+        'themator_page_themator-integration',
         'themator_page_themator-library',
         'themator_page_themator-import-export',
         'themator_page_themator-updates',
