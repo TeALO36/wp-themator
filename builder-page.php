@@ -132,10 +132,15 @@ function themator_render_builder_page() {
     <script>
     // Config transmise au builder JS (remplace wp_localize_script)
     var tmatorConfig = {
-        ajaxUrl: <?php echo json_encode( $ajax_url ); ?>,
-        nonce:   <?php echo json_encode( $nonce ); ?>,
-        postId:  <?php echo (int) $post_id; ?>,
-        savedState: <?php echo $saved_state ? $saved_state : 'null'; ?>
+        ajaxUrl:    <?php echo json_encode( $ajax_url ); ?>,
+        nonce:      <?php echo json_encode( $nonce ); ?>,
+        postId:     <?php echo (int) $post_id; ?>,
+        savedState: <?php
+            $decoded = $saved_state ? json_decode( $saved_state, true ) : null;
+            echo ( $decoded !== null && json_last_error() === JSON_ERROR_NONE )
+                ? json_encode( $decoded )
+                : 'null';
+        ?>
     };
     // Mode fullscreen standalone – pas besoin d'ouvrir un overlay
     var tmatorFullscreen = true;

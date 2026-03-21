@@ -101,10 +101,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewSizes = { desktop: '100%', tablet: '768px', mobile: '375px' };
     let currentPreview = 'desktop';
 
-    // Wire up resp + undo/redo buttons embedded in themator.php HTML
-    const respBar = overlay ? overlay.querySelector('#tm-resp-bar') : null;
-    const undoBtnEl = overlay ? overlay.querySelector('#tm-undo-btn') : null;
-    const redoBtnEl = overlay ? overlay.querySelector('#tm-redo-btn') : null;
+    // Wire up resp + undo/redo buttons
+    // In standalone mode they live directly in the document; querySelector on overlay also works since overlay wraps them
+    const respBar   = document.getElementById('tm-resp-bar');
+    const undoBtnEl = document.getElementById('tm-undo-btn');
+    const redoBtnEl = document.getElementById('tm-redo-btn');
     if (undoBtnEl) undoBtnEl.onclick = undo;
     if (redoBtnEl) redoBtnEl.onclick = redo;
     if (respBar) {
@@ -120,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateResponsiveButtons();
     }
     function updateResponsiveButtons() {
+        if (!respBar) return;
         respBar.querySelectorAll('button[data-resp]').forEach(b => {
             b.style.background = b.dataset.resp === currentPreview ? 'rgba(255,255,255,0.2)' : 'transparent';
         });
