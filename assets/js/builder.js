@@ -17,6 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas        = document.getElementById('tm-canvas');
     const dataInput     = document.getElementById('themator_data_input');
     const htmlInput     = document.getElementById('themator_html_input');
+    
+    // Critical elements check
+    if (!canvas) {
+        console.error('[Themator] Critical element #tm-canvas not found.');
+        return;
+    }
+
     const modal         = document.getElementById('tm-settings-modal');
     const modalTitle    = document.getElementById('tm-modal-title');
     const modalBody     = document.getElementById('tm-modal-body');
@@ -131,12 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ── Save ──────────────────────────────────────────────────────────────────
-    applyBtn.addEventListener('click', () => {
-        syncContentFromDOM();
-        const stateJson = JSON.stringify(state);
-        const frontendHtml = generateFrontendHTML(state);
+    if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+            syncContentFromDOM();
+            const stateJson = JSON.stringify(state);
+            const frontendHtml = generateFrontendHTML(state);
 
-        if (isStandalone) {
+            if (isStandalone) {
             // Standalone mode: save via AJAX to WordPress
             const cfg = (typeof tmatorConfig !== 'undefined') ? tmatorConfig : {};
             if (!cfg.ajaxUrl || !cfg.nonce || !cfg.postId) {
@@ -187,18 +195,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyBtn.style.background = '#e74c3c';
                 setTimeout(() => { applyBtn.textContent = 'Enregistrer'; applyBtn.style.background = '#00c14d'; applyBtn.style.color = '#fff'; }, 2500);
             });
-        } else {
-            // Overlay mode: write to hidden form fields and close
-            if (dataInput) dataInput.value = stateJson;
-            if (htmlInput) htmlInput.value = frontendHtml;
-            applyBtn.textContent = '✓ Sauvegardé';
-            setTimeout(() => {
-                applyBtn.textContent = 'Enregistrer';
-                overlay.style.display = 'none';
-                document.body.classList.remove('themator-fullscreen');
-            }, 1200);
-        }
-    });
+            } else {
+                // Overlay mode: write to hidden form fields and close
+                if (dataInput) dataInput.value = stateJson;
+                if (htmlInput) htmlInput.value = frontendHtml;
+                applyBtn.textContent = '✓ Sauvegardé';
+                setTimeout(() => {
+                    applyBtn.textContent = 'Enregistrer';
+                    overlay.style.display = 'none';
+                    document.body.classList.remove('themator-fullscreen');
+                }, 1200);
+            }
+        });
+    }
 
     // ── Render ────────────────────────────────────────────────────────────────
     function render() {

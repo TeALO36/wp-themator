@@ -124,9 +124,9 @@ function themator_render_builder_page() {
             <div class="tm-modal-body" id="tm-modal-body"></div>
         </div>
 
-        <!-- Champ caché pour la sauvegarde AJAX -->
-        <input type="hidden" id="themator_data_input" value="<?php echo esc_attr( $saved_state ); ?>">
-        <input type="hidden" id="themator_html_input" value="">
+        <!-- Champs cachés pour compatibilité (standalone utilise tmatorConfig.savedState via AJAX) -->
+        <textarea id="themator_data_input" name="themator_data" style="display:none;"></textarea>
+        <textarea id="themator_html_input" name="themator_html" style="display:none;"></textarea>
     </div>
 
     <script>
